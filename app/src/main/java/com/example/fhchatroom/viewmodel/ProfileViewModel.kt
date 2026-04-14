@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fhchatroom.Injection
 import com.example.fhchatroom.data.User
+import com.example.fhchatroom.data.normalizeStudyPath
+import com.example.fhchatroom.data.semesterBucketFor
 import com.example.fhchatroom.data.toUserOrNull
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
@@ -179,17 +181,28 @@ class ProfileViewModel : ViewModel() {
         }
     }
 
-    fun updateProfile(firstName: String, lastName: String, onComplete: (Boolean) -> Unit) {
+    fun updateProfile(
+        firstName: String,
+        lastName: String,
+        studyPath: String,
+        semester: Long,
+        onComplete: (Boolean) -> Unit
+    ) {
         viewModelScope.launch {
             try {
                 val email = auth.currentUser?.email ?: return@launch
+                val normalizedStudyPath = normalizeStudyPath(studyPath)
+                val normalizedSemester = semester.coerceAtLeast(0L)
 
                 firestore.collection("users")
                     .document(email)
                     .update(
                         mapOf(
                             "firstName" to firstName,
-                            "lastName" to lastName
+                            "lastName" to lastName,
+                            "studyPath" to normalizedStudyPath,
+                            "semester" to normalizedSemester,
+                            "semesterBucket" to semesterBucketFor(normalizedSemester)
                         )
                     )
                     .await()
