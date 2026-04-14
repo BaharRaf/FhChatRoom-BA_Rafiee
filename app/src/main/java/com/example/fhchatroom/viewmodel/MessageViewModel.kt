@@ -64,19 +64,19 @@ class MessageViewModel : ViewModel() {
         }
     }
 
-    fun sendMessage(text: String, replyToMessage: Message? = null) {
-        val currentUser = _currentUser.value ?: return
-        val roomId = _roomId.value ?: return
+    fun sendMessage(text: String, replyToMessage: Message? = null): Boolean {
+        val currentUser = _currentUser.value ?: return false
+        val roomId = _roomId.value ?: return false
         val normalizedText = text.trim()
 
         if (normalizedText.isBlank()) {
-            return
+            return false
         }
         if (normalizedText.length > MAX_TEXT_MESSAGE_LENGTH) {
             _sendResult.value = Error(
                 IllegalArgumentException("Messages can be at most $MAX_TEXT_MESSAGE_LENGTH characters.")
             )
-            return
+            return false
         }
 
         val messageData = hashMapOf<String, Any>(
@@ -113,6 +113,8 @@ class MessageViewModel : ViewModel() {
                 Log.e("MessageViewModel", "Failed to send message", e)
             }
         }
+
+        return true
     }
 
     fun sendPhotoMessage(uri: Uri, roomId: String) {

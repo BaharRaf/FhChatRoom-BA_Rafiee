@@ -481,12 +481,14 @@ fun ChatScreen(
                         onClick = {
                             val content = textState.value.trim()
                             if (content.isNotEmpty()) {
-                                messageViewModel.sendMessage(
+                                val accepted = messageViewModel.sendMessage(
                                     text = content,
                                     replyToMessage = replyToMessage
                                 )
-                                textState.value = ""
-                                replyToMessage = null
+                                if (accepted) {
+                                    textState.value = ""
+                                    replyToMessage = null
+                                }
                             }
                         }
                     ) {
