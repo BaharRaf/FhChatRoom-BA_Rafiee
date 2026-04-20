@@ -27,12 +27,26 @@ fun DocumentSnapshot.toUserOrNull(): User? {
     val email = (getString("email") ?: id).trim()
     if (email.isBlank() || !email.contains("@")) return null
 
+    val semester = coerceLong(get("semester"))
+    val semesterBucket = (getString("semesterBucket") ?: semesterBucketFor(semester)).ifBlank {
+        semesterBucketFor(semester)
+    }
+    val recommendedRoomIds = (get("recommendedRoomIds") as? List<*>)
+        ?.mapNotNull { it as? String }
+        ?: emptyList()
+
     return User(
         firstName = (getString("firstName") ?: "").trim(),
         lastName = (getString("lastName") ?: "").trim(),
         email = email,
+        studyPath = (getString("studyPath") ?: "").trim(),
+        semester = semester,
+        semesterBucket = semesterBucket,
         isOnline = coerceBoolean(get("isOnline")),
         profilePhotoUrl = (getString("profilePhotoUrl") ?: "").trim(),
-        createdAt = coerceLong(get("createdAt"))
+        createdAt = coerceLong(get("createdAt")),
+        recommendedRoomIds = recommendedRoomIds,
+        recommendationsUpdatedAt = coerceLong(get("recommendationsUpdatedAt")),
+        recommendationSource = getString("recommendationSource") ?: "NONE"
     )
 }
