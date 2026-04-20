@@ -1,22 +1,21 @@
 {
   "project_info": {
-    "project_number": "1083643615271",
-    "firebase_url": "https://fhchatroom-d00a3-default-rtdb.europe-west1.firebasedatabase.app",
-    "project_id": "fhchatroom-d00a3",
-    "storage_bucket": "fhchatroom-d00a3.firebasestorage.app"
+    "project_number": "431675701321",
+    "project_id": "fhchatroom-ba-rafiee-c58db",
+    "storage_bucket": "fhchatroom-ba-rafiee-c58db.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1083643615271:android:dcd9180a31a22b945d1602",
+        "mobilesdk_app_id": "1:431675701321:android:ca37348d2b3e8c1183a798",
         "android_client_info": {
-          "package_name": "com.example.fhchatroom"
+          "package_name": "com.baharraf.fhchatroom"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAmTwGmd2lNVy6_f4-j--AB0ms9i2G4XV4"
+          "current_key": "AIzaSyAnTSCruZYROnnmRAbrsbegVm6pXCXZ0sc"
         }
       ],
       "services": {
