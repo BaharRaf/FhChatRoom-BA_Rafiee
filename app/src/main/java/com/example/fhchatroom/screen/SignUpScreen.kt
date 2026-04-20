@@ -114,9 +114,9 @@ fun SignUpScreen(
                 val semester = semesterInput.toLongOrNull()
 
                 // Use ignoreCase true in case the user inputs uppercase letters.
-                if (!email.trim().endsWith("@stud.fh-campuswien.ac.at", ignoreCase = true)) {
+                if (!email.trim().endsWith("@stud.hcw.ac.at", ignoreCase = true)) {
                     // **Updated**: Show validation errors with Toast (disappear after a few seconds)
-                    Toast.makeText(context, "Please use your institutional email (@stud.fh-campuswien.ac.at)", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Please use your institutional email (@stud.hcw.ac.at)", Toast.LENGTH_LONG).show()
                 } else if (password.length < 8 || password.all { it.isLetterOrDigit() }) {
                     Toast.makeText(context, "Password must be at least 8 characters long and include at least one special character", Toast.LENGTH_LONG).show()
                 } else if (studyPath.isBlank()) {
