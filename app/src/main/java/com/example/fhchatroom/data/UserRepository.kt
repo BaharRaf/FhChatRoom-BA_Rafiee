@@ -1,5 +1,6 @@
 package com.example.fhchatroom.data
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -9,6 +10,11 @@ class UserRepository(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore
 ) {
+    companion object {
+        private const val TAG = "UserRepository"
+    }
+
+    private val academicRoomSeeder = AcademicRoomSeeder(firestore)
 
     suspend fun signUp(
         email: String,
@@ -19,18 +25,18 @@ class UserRepository(
         semester: Long
     ): Result<Boolean> = try {
         auth.createUserWithEmailAndPassword(email, password).await()
-        val normalizedStudyPath = normalizeStudyPath(studyPath)
-        val normalizedSemester = semester.coerceAtLeast(0L)
+        val repairedAcademicProfile = repairAcademicProfile(studyPath, semester)
         val user = User(
             firstName = firstName,
             lastName = lastName,
             email = email,
-            studyPath = normalizedStudyPath,
-            semester = normalizedSemester,
-            semesterBucket = semesterBucketFor(normalizedSemester),
+            studyPath = repairedAcademicProfile.studyPath,
+            semester = repairedAcademicProfile.semester,
+            semesterBucket = repairedAcademicProfile.semesterBucket,
             isOnline = true
         )
         saveUserToFirestore(user)
+        syncAcademicRoomsBestEffort(user)
         Result.Success(true)
     } catch (e: Exception) {
         Result.Error(e)
@@ -39,28 +45,34 @@ class UserRepository(
 
     suspend fun login(email: String, password: String): Result<Boolean> = try {
         auth.signInWithEmailAndPassword(email, password).await()
-        ensureUserDocumentExists(auth.currentUser?.email ?: email.trim())
+        ensureUserDocumentExists(auth.currentUser?.email ?: email.trim())?.let { user ->
+            syncAcademicRoomsBestEffort(user)
+        }
         Result.Success(true)
     } catch(e: Exception) {
         Result.Error(e)
     }
 
-    private suspend fun ensureUserDocumentExists(email: String) {
+    private suspend fun ensureUserDocumentExists(email: String): User? {
         val normalizedEmail = email.trim()
-        if (normalizedEmail.isBlank()) return
+        if (normalizedEmail.isBlank()) return null
 
         val document = firestore.collection("users")
             .document(normalizedEmail)
             .get()
             .await()
 
-        if (document.exists()) return
+        if (document.exists()) {
+            val existingUser = document.toUserOrNull() ?: return null
+            return repairAcademicProfileIfNeeded(existingUser)
+        }
 
         val fallbackUser = buildFallbackUser(normalizedEmail)
         firestore.collection("users")
             .document(normalizedEmail)
             .set(fallbackUser, SetOptions.merge())
             .await()
+        return fallbackUser
     }
 
     private fun buildFallbackUser(email: String): User {
@@ -95,6 +107,35 @@ class UserRepository(
             .await()
     }
 
+    private suspend fun repairAcademicProfileIfNeeded(user: User): User {
+        val repairedUser = user.withRepairedAcademicProfile()
+        if (repairedUser == user) {
+            return user
+        }
+
+        firestore.collection("users")
+            .document(user.email)
+            .set(
+                mapOf(
+                    "studyPath" to repairedUser.studyPath,
+                    "semester" to repairedUser.semester,
+                    "semesterBucket" to repairedUser.semesterBucket
+                ),
+                SetOptions.merge()
+            )
+            .await()
+
+        return repairedUser
+    }
+
+    private suspend fun syncAcademicRoomsBestEffort(user: User) {
+        runCatching {
+            academicRoomSeeder.syncRoomsForUser(user)
+        }.onFailure { error ->
+            Log.w(TAG, "Failed to sync academic rooms for ${user.email}", error)
+        }
+    }
+
 
     suspend fun getCurrentUser(): Result<User> = try {
         val uid = auth.currentUser?.email
@@ -103,7 +144,7 @@ class UserRepository(
                 .document(uid)
                 .get()
                 .await()
-            val user = userDocument.toUserOrNull()
+            val user = userDocument.toUserOrNull()?.let { repairAcademicProfileIfNeeded(it) }
             if (user != null) {
                 Result.Success(user)
             } else {
@@ -120,7 +161,7 @@ class UserRepository(
             .document(email)
             .get()
             .await()
-        val user = userDocument.toUserOrNull()
+        val user = userDocument.toUserOrNull()?.let { repairAcademicProfileIfNeeded(it) }
         if (user != null) {
             Result.Success(user)
         } else {

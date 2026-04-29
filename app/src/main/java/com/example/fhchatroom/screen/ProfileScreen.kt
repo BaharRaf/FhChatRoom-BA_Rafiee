@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -38,7 +37,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,6 +52,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -62,11 +65,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
+import com.example.fhchatroom.data.semesterOptionsForStudyPath
+import com.example.fhchatroom.data.studyPathOptions
 import com.example.fhchatroom.viewmodel.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -92,13 +96,25 @@ fun ProfileScreen(
     var newLastName by remember { mutableStateOf("") }
     var newStudyPath by remember { mutableStateOf("") }
     var newSemesterInput by remember { mutableStateOf("") }
+    var isEditStudyPathExpanded by remember { mutableStateOf(false) }
+    var isEditSemesterExpanded by remember { mutableStateOf(false) }
     var showPhotoOptions by remember { mutableStateOf(false) }
     var showAvatarSelector by remember { mutableStateOf(false) }
+    val availableEditSemesterOptions = remember(newStudyPath) {
+        semesterOptionsForStudyPath(newStudyPath)
+    }
 
     // Real-time online status
     var isOnline by remember { mutableStateOf(false) }
     val database = FirebaseDatabase.getInstance()
     val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
+
+    LaunchedEffect(newStudyPath, availableEditSemesterOptions) {
+        val selectedSemester = newSemesterInput.toLongOrNull()
+        if (selectedSemester != null && selectedSemester !in availableEditSemesterOptions) {
+            newSemesterInput = ""
+        }
+    }
 
     // Listen to real-time online status from RTDB
     DisposableEffect(currentUserEmail) {
@@ -530,21 +546,81 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = newStudyPath,
-                        onValueChange = { newStudyPath = it },
-                        label = { Text("Study Path") },
+                    ExposedDropdownMenuBox(
+                        expanded = isEditStudyPathExpanded,
+                        onExpandedChange = { isEditStudyPathExpanded = it },
                         modifier = Modifier.fillMaxWidth()
-                    )
+                    ) {
+                        OutlinedTextField(
+                            value = newStudyPath,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Study Path") },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isEditStudyPathExpanded)
+                            },
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = isEditStudyPathExpanded,
+                            onDismissRequest = { isEditStudyPathExpanded = false }
+                        ) {
+                            studyPathOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option) },
+                                    onClick = {
+                                        newStudyPath = option
+                                        newSemesterInput = ""
+                                        isEditStudyPathExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = newSemesterInput,
-                        onValueChange = { newSemesterInput = it.filter(Char::isDigit).take(2) },
-                        label = { Text("Semester") },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
-                    )
+                    ExposedDropdownMenuBox(
+                        expanded = isEditSemesterExpanded,
+                        onExpandedChange = {
+                            if (availableEditSemesterOptions.isNotEmpty()) {
+                                isEditSemesterExpanded = it
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = newSemesterInput.toLongOrNull()?.let { "Semester $it" } ?: "",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Semester") },
+                            placeholder = {
+                                Text(if (newStudyPath.isBlank()) "Choose study path first" else "Choose semester")
+                            },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isEditSemesterExpanded)
+                            },
+                            enabled = availableEditSemesterOptions.isNotEmpty(),
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth(),
+                            singleLine = true
+                        )
+                        ExposedDropdownMenu(
+                            expanded = isEditSemesterExpanded,
+                            onDismissRequest = { isEditSemesterExpanded = false }
+                        ) {
+                            availableEditSemesterOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text("Semester $option") },
+                                    onClick = {
+                                        newSemesterInput = option.toString()
+                                        isEditSemesterExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             },
             confirmButton = {
@@ -552,10 +628,10 @@ fun ProfileScreen(
                     onClick = {
                         val semester = newSemesterInput.toLongOrNull()
 
-                        if (newStudyPath.isBlank() || semester == null || semester !in 1L..12L) {
+                        if (newStudyPath.isBlank() || semester == null || semester !in availableEditSemesterOptions) {
                             Toast.makeText(
                                 context,
-                                "Please provide a study path and a semester between 1 and 12",
+                                "Please choose an available semester for $newStudyPath",
                                 Toast.LENGTH_LONG
                             ).show()
                         } else {

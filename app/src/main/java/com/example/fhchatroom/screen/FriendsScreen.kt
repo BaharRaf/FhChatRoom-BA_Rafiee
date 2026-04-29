@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -724,7 +725,23 @@ private fun AllUsersItem(
                 Text(
                     text = "${user.firstName} ${user.lastName}".trim(),
                     fontWeight = FontWeight.Medium,
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = user.email,
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = user.academicProfileLabel(),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
@@ -735,7 +752,7 @@ private fun AllUsersItem(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (isOnline) "Online" else user.email,
+                        text = if (isOnline) "Online" else "Offline",
                         fontSize = 12.sp,
                         color = if (isOnline) Color.Green else Color.Gray
                     )
@@ -832,6 +849,13 @@ private fun AllUsersItem(
             }
         }
     }
+}
+
+private fun User.academicProfileLabel(): String {
+    val path = studyPath.ifBlank { "Study path not set" }
+    val semesterLabel = if (semester > 0L) "Semester $semester" else "semester not set"
+
+    return "$path • $semesterLabel"
 }
 
 // Backwards-compat overload
