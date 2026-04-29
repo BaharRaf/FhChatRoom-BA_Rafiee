@@ -26,7 +26,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -46,11 +45,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fhchatroom.Injection
 import com.example.fhchatroom.data.Room
 import com.example.fhchatroom.data.User
+import com.example.fhchatroom.data.studyPathCatalogKey
 import com.example.fhchatroom.data.toUserOrNull
 import com.example.fhchatroom.viewmodel.RoomViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -70,6 +71,7 @@ enum class SortOption {
     OLDEST_FIRST
 }
 private enum class RoomTab { PUBLIC, PRIVATE }
+private enum class PublicRoomFilter { ALL, ACADEMIC, STUDENT }
 
 @Composable
 fun ChatRoomListScreen(
@@ -82,6 +84,8 @@ fun ChatRoomListScreen(
     onToggleTheme: () -> Unit
 ) {
     val rooms by roomViewModel.rooms.observeAsState(emptyList())
+    val currentAcademicUser by roomViewModel.currentAcademicUser.observeAsState()
+    val academicRoomSyncError by roomViewModel.academicRoomSyncError.observeAsState()
     var showDialog by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -92,11 +96,22 @@ fun ChatRoomListScreen(
     var sortOption by remember { mutableStateOf(SortOption.NAME_ASC) }
     var showSortMenu by remember { mutableStateOf(false) }
 
-    // Private creation toggle (enabled)
-    var isPrivate by remember { mutableStateOf(false) }
     var tab by remember { mutableStateOf(RoomTab.PUBLIC) }
+    var publicRoomFilter by remember { mutableStateOf(PublicRoomFilter.ALL) }
 
     val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
+    val context = LocalContext.current
+
+    LaunchedEffect(currentUserEmail) {
+        roomViewModel.syncAcademicRoomsForCurrentUser()
+    }
+
+    LaunchedEffect(academicRoomSyncError) {
+        academicRoomSyncError?.let { error ->
+            Toast.makeText(context, "Predefined room sync failed: $error", Toast.LENGTH_LONG).show()
+            roomViewModel.clearAcademicRoomSyncError()
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         // Top app bar
@@ -113,6 +128,11 @@ fun ChatRoomListScreen(
         SegmentedButtons(tab) { tab = it }
 
         Spacer(modifier = Modifier.height(8.dp))
+
+        if (tab == RoomTab.PUBLIC) {
+            PublicRoomFilterButtons(publicRoomFilter) { publicRoomFilter = it }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         // Header (no counts)
         Row(
@@ -187,11 +207,29 @@ fun ChatRoomListScreen(
         }
 
         // TAB FILTERING
-        // PUBLIC: only non-private rooms (excludes DMs and private groups)
-        // PRIVATE: all private rooms the user can access: DMs (isDirect) AND private groups (isPrivate)
+        // PUBLIC: predefined academic rooms plus student-created public rooms.
+        // PRIVATE: private user-created rooms and DMs.
         val tabRooms = when (tab) {
-            RoomTab.PUBLIC -> rooms.filter { !it.isPrivate }
-            RoomTab.PRIVATE -> rooms.filter { it.isPrivate && currentUserEmail != null && (it.members.contains(currentUserEmail) || it.ownerEmail == currentUserEmail) }
+            RoomTab.PUBLIC -> {
+                val academicRooms = rooms.filter { room ->
+                    room.matchesAcademicProfile(currentAcademicUser)
+                }
+                val studentPublicRooms = rooms.filter { room ->
+                    !room.isPrivate && !room.isDirect && !room.isAcademicRoom()
+                }
+
+                when (publicRoomFilter) {
+                    PublicRoomFilter.ALL -> academicRooms + studentPublicRooms
+                    PublicRoomFilter.ACADEMIC -> academicRooms
+                    PublicRoomFilter.STUDENT -> studentPublicRooms
+                }
+            }
+            RoomTab.PRIVATE -> rooms.filter { room ->
+                room.isPrivate &&
+                        !room.isAcademicRoom() &&
+                        currentUserEmail != null &&
+                        (room.members.contains(currentUserEmail) || room.ownerEmail == currentUserEmail)
+            }
         }
 
         // Apply search on the tab list
@@ -224,10 +262,14 @@ fun ChatRoomListScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = if (searchQuery.isNotEmpty())
-                        "No rooms found matching \"$searchQuery\""
-                    else
-                        "No chat rooms available",
+                    text = when {
+                        searchQuery.isNotEmpty() -> "No rooms found matching \"$searchQuery\""
+                        academicRoomSyncError != null -> "Could not sync predefined rooms. Check Logcat for the Firestore error."
+                        tab == RoomTab.PUBLIC && publicRoomFilter == PublicRoomFilter.ACADEMIC -> "No academic rooms available. Check your study path and semester in Profile."
+                        tab == RoomTab.PUBLIC && publicRoomFilter == PublicRoomFilter.STUDENT -> "No student-made public rooms yet."
+                        tab == RoomTab.PUBLIC -> "No public rooms available yet."
+                        else -> "No private rooms available"
+                    },
                     color = Color.Gray
                 )
                 if (searchQuery.isNotEmpty()) {
@@ -270,18 +312,19 @@ fun ChatRoomListScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Create Room (public or private based on checkbox)
         Button(
             onClick = { showDialog = true },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Create Room")
+            Text(if (tab == RoomTab.PRIVATE) "Create Private Room" else "Create Public Room")
         }
 
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
-                title = { Text("Create a new room") },
+                title = {
+                    Text(if (tab == RoomTab.PRIVATE) "Create a private room" else "Create a public room")
+                },
                 text = {
                     Column {
                         OutlinedTextField(
@@ -298,13 +341,16 @@ fun ChatRoomListScreen(
                             modifier = Modifier.fillMaxWidth().padding(8.dp),
                             maxLines = 3
                         )
-                        Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(
-                                checked = isPrivate,
-                                onCheckedChange = { isPrivate = it }
-                            )
-                            Text("Private (visible only to you & invited)")
-                        }
+                        Text(
+                            text = if (tab == RoomTab.PRIVATE) {
+                                "Private rooms are visible only to invited members."
+                            } else {
+                                "Public student-made rooms are visible to all students. Academic rooms are still created automatically."
+                            },
+                            modifier = Modifier.padding(8.dp),
+                            color = Color.Gray,
+                            fontSize = 12.sp
+                        )
                     }
                 },
                 confirmButton = {
@@ -317,12 +363,14 @@ fun ChatRoomListScreen(
                                 roomViewModel.createRoom(
                                     name = name,
                                     description = description,
-                                    category = "",
-                                    isPrivate = isPrivate
+                                    category = if (tab == RoomTab.PRIVATE) "" else "Student",
+                                    isPrivate = tab == RoomTab.PRIVATE
                                 )
+                                if (tab == RoomTab.PUBLIC) {
+                                    publicRoomFilter = PublicRoomFilter.STUDENT
+                                }
                                 name = ""
                                 description = ""
-                                isPrivate = false
                                 showDialog = false
                             }
                         }) { Text("Add") }
@@ -331,7 +379,6 @@ fun ChatRoomListScreen(
                             showDialog = false
                             name = ""
                             description = ""
-                            isPrivate = false
                         }) { Text("Cancel") }
                     }
                 }
@@ -368,6 +415,42 @@ private fun SegmentedButtons(current: RoomTab, onChange: (RoomTab) -> Unit) {
 }
 
 @Composable
+private fun PublicRoomFilterButtons(
+    current: PublicRoomFilter,
+    onChange: (PublicRoomFilter) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        listOf(
+            PublicRoomFilter.ALL to "All",
+            PublicRoomFilter.ACADEMIC to "Academic",
+            PublicRoomFilter.STUDENT to "Student-made"
+        ).forEach { (value, label) ->
+            val selected = current == value
+            Text(
+                text = label,
+                color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .background(
+                        color = if (selected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                        },
+                        shape = CircleShape
+                    )
+                    .clickable { onChange(value) }
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
 fun RoomItem(
     room: Room,
     isMember: Boolean = false,
@@ -380,6 +463,7 @@ fun RoomItem(
 ) {
     val context = LocalContext.current
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    val isAcademicRoom = room.isAcademicRoom()
 
     Card(
         modifier = Modifier
@@ -400,81 +484,46 @@ fun RoomItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    val currentEmail = FirebaseAuth.getInstance().currentUser?.email
-                    val dmOther = room.members.firstOrNull { it != currentEmail } ?: room.members.firstOrNull()
+                val currentEmail = FirebaseAuth.getInstance().currentUser?.email
+                val dmOther = room.members.firstOrNull { it != currentEmail } ?: room.members.firstOrNull()
 
-                    // Title: for DMs, show other user's name (fallback to email), else room.name
-                    var titleText by remember { mutableStateOf(room.name) }
-                    LaunchedEffect(room.id, dmOther, room.isDirect) {
-                        if (room.isDirect && dmOther != null) {
-                            try {
-                                val firestore = Injection.instance()
-                                val qs = firestore.collection("users")
-                                    .whereEqualTo("email", dmOther)
-                                    .limit(1)
-                                    .get()
-                                    .await()
-                                val user = qs.documents.firstOrNull()?.toUserOrNull()
-                                val full = listOfNotNull(user?.firstName?.trim(), user?.lastName?.trim())
-                                    .joinToString(" ")
-                                    .trim()
-                                titleText = if (full.isNotEmpty()) full else dmOther
-                            } catch (_: Exception) {
-                                titleText = dmOther ?: room.name
-                            }
-                        } else {
-                            titleText = room.name
+                // Title: for DMs, show other user's name (fallback to email), else room.name
+                var titleText by remember { mutableStateOf(room.name) }
+                LaunchedEffect(room.id, dmOther, room.isDirect) {
+                    if (room.isDirect && dmOther != null) {
+                        try {
+                            val firestore = Injection.instance()
+                            val qs = firestore.collection("users")
+                                .whereEqualTo("email", dmOther)
+                                .limit(1)
+                                .get()
+                                .await()
+                            val user = qs.documents.firstOrNull()?.toUserOrNull()
+                            val full = listOfNotNull(user?.firstName?.trim(), user?.lastName?.trim())
+                                .joinToString(" ")
+                                .trim()
+                            titleText = if (full.isNotEmpty()) full else dmOther
+                        } catch (_: Exception) {
+                            titleText = dmOther ?: room.name
                         }
-                    }
-
-                    Text(
-                        text = titleText,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-
-                    if (room.isDirect) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        // DM tag
-                        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiary)) {
-                            Text(
-                                text = "DM",
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                fontSize = 10.sp,
-                                color = MaterialTheme.colorScheme.onTertiary
-                            )
-                        }
-                    } else if (room.isPrivate) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        // Private tag for non-DM private rooms
-                        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary)) {
-                            Text(
-                                text = "Private",
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                fontSize = 10.sp,
-                                color = MaterialTheme.colorScheme.onSecondary
-                            )
-                        }
-                    }
-
-                    // Remove "Joined" tag for DMs; keep for non-DM rooms
-                    if (isMember && !room.isDirect) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primary
-                            )
-                        ) {
-                            Text(
-                                text = "Joined",
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                fontSize = 10.sp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
+                    } else {
+                        titleText = room.name
                     }
                 }
+
+                Text(
+                    text = titleText,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                RoomTags(
+                    room = room,
+                    isMember = isMember,
+                    isAcademicRoom = isAcademicRoom
+                )
 
                 // Last message preview / description
                 if (room.lastMessage.isNotEmpty()) {
@@ -592,6 +641,54 @@ fun RoomItem(
     }
 }
 
+@Composable
+private fun RoomTags(
+    room: Room,
+    isMember: Boolean,
+    isAcademicRoom: Boolean
+) {
+    val labels = buildList {
+        when {
+            room.isDirect -> add("DM")
+            isAcademicRoom -> add(
+                if (room.category.equals("Lecture", ignoreCase = true)) "Lecture" else "Main"
+            )
+            !room.isPrivate -> add("Student")
+            room.isPrivate -> add("Private")
+        }
+
+        if (isMember && !room.isDirect && !isAcademicRoom) {
+            add("Joined")
+        }
+    }
+
+    if (labels.isEmpty()) {
+        return
+    }
+
+    Row(
+        modifier = Modifier.padding(top = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        labels.forEach { label ->
+            Text(
+                text = label,
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        shape = CircleShape
+                    )
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1
+            )
+        }
+    }
+}
+
 // Helper function to format timestamp for last message
 private fun formatMessageTime(timestamp: Long): String {
     val now = System.currentTimeMillis()
@@ -608,4 +705,21 @@ private fun formatMessageTime(timestamp: Long): String {
             format.format(date)
         }
     }
+}
+
+private fun Room.isAcademicRoom(): Boolean {
+    return templateRoom ||
+            category.equals("Academic", ignoreCase = true) ||
+            category.equals("Lecture", ignoreCase = true)
+}
+
+private fun Room.matchesAcademicProfile(user: User?): Boolean {
+    val studyPath = user?.studyPath?.trim().orEmpty()
+    val semester = user?.semester ?: 0L
+
+    return isAcademicRoom() &&
+            studyPath.isNotBlank() &&
+            semester > 0 &&
+            studyPathCatalogKey(academicStudyPath) == studyPathCatalogKey(studyPath) &&
+            academicSemester == semester
 }

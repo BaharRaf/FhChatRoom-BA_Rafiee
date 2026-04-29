@@ -1,26 +1,50 @@
 package com.example.fhchatroom.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.fhchatroom.Injection
+import com.example.fhchatroom.data.AcademicRoomSeeder
 import com.example.fhchatroom.data.Room
+import com.example.fhchatroom.data.User
+import com.example.fhchatroom.data.toRoomOrNull
+import com.example.fhchatroom.data.toUserOrNull
+import com.example.fhchatroom.data.withRepairedAcademicProfile
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.ktx.toObject
+import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.Source
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class RoomViewModel : ViewModel() {
+    companion object {
+        private const val TAG = "RoomViewModel"
+    }
 
     private val _rooms = MutableLiveData<List<Room>>()
     val rooms: LiveData<List<Room>> get() = _rooms
+    private val _currentAcademicUser = MutableLiveData<User?>(null)
+    val currentAcademicUser: LiveData<User?> get() = _currentAcademicUser
+    private val _academicRoomSyncError = MutableLiveData<String?>(null)
+    val academicRoomSyncError: LiveData<String?> get() = _academicRoomSyncError
 
     private val firestore = Injection.instance()
     private var roomListener: ListenerRegistration? = null
     private val auth = FirebaseAuth.getInstance()
+    private val academicRoomSeeder = AcademicRoomSeeder(firestore)
+    private val authStateListener = FirebaseAuth.AuthStateListener {
+        syncAcademicRoomsForCurrentUser()
+    }
 
     init {
         observeRoomsInRealTime()
+        auth.addAuthStateListener(authStateListener)
+        syncAcademicRoomsForCurrentUser()
     }
 
     private fun observeRoomsInRealTime() {
@@ -31,26 +55,15 @@ class RoomViewModel : ViewModel() {
                 }
                 val self = auth.currentUser?.email
                 if (snapshot != null) {
-                    // Build rooms with robust boolean mapping for "isPrivate"/"private" and "isDirect"/"direct"
                     var updatedRooms = snapshot.documents.mapNotNull { doc ->
-                        val base = doc.toObject<Room>()?.copy(id = doc.id) ?: return@mapNotNull null
-
-                        // Fallbacks for documents where booleans were stored under "private"/"direct"
-                        val privateFromDoc = (doc.getBoolean("isPrivate") ?: doc.getBoolean("private")) ?: base.isPrivate
-                        val directFromDoc  = (doc.getBoolean("isDirect")  ?: doc.getBoolean("direct"))  ?: base.isDirect
-
-                        // Check if user has hidden this room (for DMs)
-                        val hiddenBy = (doc.get("hiddenBy") as? List<String>) ?: emptyList()
+                        val room = doc.toRoomOrNull() ?: return@mapNotNull null
 
                         // Don't show room if user has hidden it
-                        if (self != null && hiddenBy.contains(self)) {
+                        if (self != null && room.hiddenBy.contains(self)) {
                             return@mapNotNull null
                         }
 
-                        base.copy(
-                            isPrivate = privateFromDoc,
-                            isDirect = directFromDoc
-                        )
+                        room
                     }
 
                     // Visibility: if signed-in, keep public + your private rooms; otherwise keep only public
@@ -69,6 +82,66 @@ class RoomViewModel : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         roomListener?.remove()
+        auth.removeAuthStateListener(authStateListener)
+    }
+
+    fun syncAcademicRoomsForCurrentUser() {
+        viewModelScope.launch {
+            val email = auth.currentUser?.email?.trim() ?: return@launch
+            runCatching {
+                val rawUser = loadCurrentUserForAcademicSync(email) ?: return@launch
+                val user = rawUser.withRepairedAcademicProfile()
+                _currentAcademicUser.value = user
+
+                if (user != rawUser) {
+                    runCatching {
+                        persistAcademicProfileRepair(user)
+                    }.onFailure { repairError ->
+                        Log.w(TAG, "Failed to repair academic profile for $email", repairError)
+                    }
+                }
+
+                academicRoomSeeder.syncRoomsForUser(user)
+                _academicRoomSyncError.value = null
+            }.onFailure { error ->
+                if (error is CancellationException) {
+                    return@onFailure
+                }
+                Log.w(TAG, "Failed to sync predefined academic rooms for $email", error)
+                _academicRoomSyncError.value = error.message ?: error::class.java.simpleName
+            }
+        }
+    }
+
+    fun clearAcademicRoomSyncError() {
+        _academicRoomSyncError.value = null
+    }
+
+    private suspend fun loadCurrentUserForAcademicSync(email: String) =
+        runCatching {
+            firestore.collection("users")
+                .document(email)
+                .get()
+                .await()
+        }.getOrElse {
+            firestore.collection("users")
+                .document(email)
+                .get(Source.CACHE)
+                .await()
+        }.toUserOrNull()
+
+    private suspend fun persistAcademicProfileRepair(user: User) {
+        firestore.collection("users")
+            .document(user.email)
+            .set(
+                mapOf(
+                    "studyPath" to user.studyPath,
+                    "semester" to user.semester,
+                    "semesterBucket" to user.semesterBucket
+                ),
+                SetOptions.merge()
+            )
+            .await()
     }
 
     fun createRoom(name: String, description: String, category: String = "") =
@@ -104,7 +177,7 @@ class RoomViewModel : ViewModel() {
                     return@addOnSuccessListener
                 }
 
-                val room = document.toObject(Room::class.java)
+                val room = document.toRoomOrNull()
                 val currentUserEmail = auth.currentUser?.email
 
                 // Check if current user is owner or member (for any type of group)
@@ -115,7 +188,7 @@ class RoomViewModel : ViewModel() {
                 }
 
                 // Check if user has permission to invite (must be owner or member)
-                if (room?.ownerEmail != currentUserEmail && !room?.members?.contains(currentUserEmail)!!) {
+                if (room?.ownerEmail != currentUserEmail && room?.members?.contains(currentUserEmail) != true) {
                     onResult(false, "You don't have permission to invite to this room")
                     return@addOnSuccessListener
                 }
@@ -154,7 +227,7 @@ class RoomViewModel : ViewModel() {
         firestore.collection("rooms").document(roomId)
             .get()
             .addOnSuccessListener { document ->
-                val room = document.toObject(Room::class.java)
+                val room = document.toRoomOrNull()
 
                 if (room?.isDirect == true) {
                     // For DMs, add to hiddenBy list instead of removing from members
@@ -210,15 +283,18 @@ class RoomViewModel : ViewModel() {
             .get()
             .addOnSuccessListener { qs ->
                 val existing = qs.documents.firstOrNull { doc ->
-                    val members = (doc.get("members") as? List<*>)?.map { it as String } ?: emptyList()
-                    val hiddenBy = (doc.get("hiddenBy") as? List<String>) ?: emptyList()
+                    val members = (doc.get("members") as? List<*>)
+                        ?.mapNotNull { it as? String }
+                        ?: emptyList()
                     members.size == 2 && members.contains(targetEmail)
                 }
 
                 if (existing != null) {
                     val isDirect = (existing.get("isDirect") as? Boolean)
                         ?: (existing.get("direct") as? Boolean) ?: false
-                    val hiddenBy = (existing.get("hiddenBy") as? List<String>) ?: emptyList()
+                    val hiddenBy = (existing.get("hiddenBy") as? List<*>)
+                        ?.mapNotNull { it as? String }
+                        ?: emptyList()
 
                     // If user had hidden this DM, unhide it
                     if (hiddenBy.contains(self)) {

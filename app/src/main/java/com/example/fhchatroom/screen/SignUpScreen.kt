@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,10 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.fhchatroom.data.Result
+import com.example.fhchatroom.data.semesterOptionsForStudyPath
+import com.example.fhchatroom.data.studyPathOptions
 import com.example.fhchatroom.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,11 +46,23 @@ fun SignUpScreen(
     var lastName by remember { mutableStateOf("") }
     var studyPath by remember { mutableStateOf("") }
     var semesterInput by remember { mutableStateOf("") }
+    var isStudyPathExpanded by remember { mutableStateOf(false) }
+    var isSemesterExpanded by remember { mutableStateOf(false) }
     val result by authViewModel.authResult.observeAsState()
     val context = LocalContext.current
+    val availableSemesterOptions = remember(studyPath) {
+        semesterOptionsForStudyPath(studyPath)
+    }
 
     LaunchedEffect(Unit) {
         authViewModel.clearAuthResult()
+    }
+
+    LaunchedEffect(studyPath, availableSemesterOptions) {
+        val selectedSemester = semesterInput.toLongOrNull()
+        if (selectedSemester != null && selectedSemester !in availableSemesterOptions) {
+            semesterInput = ""
+        }
     }
 
     Column(
@@ -90,24 +105,84 @@ fun SignUpScreen(
                 .fillMaxWidth()
                 .padding(8.dp)
         )
-        OutlinedTextField(
-            value = studyPath,
-            onValueChange = { studyPath = it },
-            label = { Text("Study Path") },
+        ExposedDropdownMenuBox(
+            expanded = isStudyPathExpanded,
+            onExpandedChange = { isStudyPathExpanded = it },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp)
-        )
-        OutlinedTextField(
-            value = semesterInput,
-            onValueChange = { semesterInput = it.filter(Char::isDigit).take(2) },
-            label = { Text("Semester") },
+        ) {
+            OutlinedTextField(
+                value = studyPath,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Study Path") },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = isStudyPathExpanded)
+                },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = isStudyPathExpanded,
+                onDismissRequest = { isStudyPathExpanded = false }
+            ) {
+                studyPathOptions.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = {
+                            studyPath = option
+                            semesterInput = ""
+                            isStudyPathExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+        ExposedDropdownMenuBox(
+            expanded = isSemesterExpanded,
+            onExpandedChange = {
+                if (availableSemesterOptions.isNotEmpty()) {
+                    isSemesterExpanded = it
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true
-        )
+                .padding(8.dp)
+        ) {
+            OutlinedTextField(
+                value = semesterInput.toLongOrNull()?.let { "Semester $it" } ?: "",
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Semester") },
+                placeholder = {
+                    Text(if (studyPath.isBlank()) "Choose study path first" else "Choose semester")
+                },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = isSemesterExpanded)
+                },
+                enabled = availableSemesterOptions.isNotEmpty(),
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+                singleLine = true
+            )
+            ExposedDropdownMenu(
+                expanded = isSemesterExpanded,
+                onDismissRequest = { isSemesterExpanded = false }
+            ) {
+                availableSemesterOptions.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text("Semester $option") },
+                        onClick = {
+                            semesterInput = option.toString()
+                            isSemesterExpanded = false
+                        }
+                    )
+                }
+            }
+        }
 
         Button(
             onClick = {
@@ -120,9 +195,9 @@ fun SignUpScreen(
                 } else if (password.length < 8 || password.all { it.isLetterOrDigit() }) {
                     Toast.makeText(context, "Password must be at least 8 characters long and include at least one special character", Toast.LENGTH_LONG).show()
                 } else if (studyPath.isBlank()) {
-                    Toast.makeText(context, "Please enter your study path", Toast.LENGTH_LONG).show()
-                } else if (semester == null || semester !in 1L..12L) {
-                    Toast.makeText(context, "Please enter a semester between 1 and 12", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Please choose your study path", Toast.LENGTH_LONG).show()
+                } else if (semester == null || semester !in availableSemesterOptions) {
+                    Toast.makeText(context, "Please choose an available semester for $studyPath", Toast.LENGTH_LONG).show()
                 } else {
                     authViewModel.signUp(
                         email = email,

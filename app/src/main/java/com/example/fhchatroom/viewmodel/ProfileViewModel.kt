@@ -2,15 +2,17 @@ package com.example.fhchatroom.viewmodel
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fhchatroom.Injection
+import com.example.fhchatroom.data.AcademicRoomSeeder
 import com.example.fhchatroom.data.User
-import com.example.fhchatroom.data.normalizeStudyPath
-import com.example.fhchatroom.data.semesterBucketFor
+import com.example.fhchatroom.data.repairAcademicProfile
 import com.example.fhchatroom.data.toUserOrNull
+import com.example.fhchatroom.data.withRepairedAcademicProfile
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
@@ -19,9 +21,14 @@ import java.io.ByteArrayOutputStream
 import java.util.UUID
 
 class ProfileViewModel : ViewModel() {
+    companion object {
+        private const val TAG = "ProfileViewModel"
+    }
+
     private val auth = FirebaseAuth.getInstance()
     private val firestore = Injection.instance()
     private val storage = FirebaseStorage.getInstance()
+    private val academicRoomSeeder = AcademicRoomSeeder(firestore)
 
     private val _currentUser = MutableLiveData<User?>()
     val currentUser: LiveData<User?> = _currentUser
@@ -40,7 +47,19 @@ class ProfileViewModel : ViewModel() {
             .document(email)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) return@addSnapshotListener
-                _currentUser.value = snapshot?.toUserOrNull()
+                val rawUser = snapshot?.toUserOrNull()
+                val repairedUser = rawUser?.withRepairedAcademicProfile()
+                _currentUser.value = repairedUser
+
+                if (rawUser != null && repairedUser != null && repairedUser != rawUser) {
+                    viewModelScope.launch {
+                        runCatching {
+                            persistAcademicProfileRepair(repairedUser)
+                        }.onFailure { repairError ->
+                            Log.w(TAG, "Failed to repair academic profile for ${repairedUser.email}", repairError)
+                        }
+                    }
+                }
             }
     }
 
@@ -191,8 +210,7 @@ class ProfileViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val email = auth.currentUser?.email ?: return@launch
-                val normalizedStudyPath = normalizeStudyPath(studyPath)
-                val normalizedSemester = semester.coerceAtLeast(0L)
+                val repairedAcademicProfile = repairAcademicProfile(studyPath, semester)
 
                 firestore.collection("users")
                     .document(email)
@@ -200,17 +218,43 @@ class ProfileViewModel : ViewModel() {
                         mapOf(
                             "firstName" to firstName,
                             "lastName" to lastName,
-                            "studyPath" to normalizedStudyPath,
-                            "semester" to normalizedSemester,
-                            "semesterBucket" to semesterBucketFor(normalizedSemester)
+                            "studyPath" to repairedAcademicProfile.studyPath,
+                            "semester" to repairedAcademicProfile.semester,
+                            "semesterBucket" to repairedAcademicProfile.semesterBucket
                         )
                     )
                     .await()
+
+                val updatedUser = (_currentUser.value ?: User(email = email)).copy(
+                    firstName = firstName,
+                    lastName = lastName,
+                    studyPath = repairedAcademicProfile.studyPath,
+                    semester = repairedAcademicProfile.semester,
+                    semesterBucket = repairedAcademicProfile.semesterBucket
+                )
+                runCatching {
+                    academicRoomSeeder.syncRoomsForUser(updatedUser)
+                }.onFailure { error ->
+                    Log.w(TAG, "Failed to sync academic rooms for $email", error)
+                }
 
                 onComplete(true)
             } catch (e: Exception) {
                 onComplete(false)
             }
         }
+    }
+
+    private suspend fun persistAcademicProfileRepair(user: User) {
+        firestore.collection("users")
+            .document(user.email)
+            .update(
+                mapOf(
+                    "studyPath" to user.studyPath,
+                    "semester" to user.semester,
+                    "semesterBucket" to user.semesterBucket
+                )
+            )
+            .await()
     }
 }

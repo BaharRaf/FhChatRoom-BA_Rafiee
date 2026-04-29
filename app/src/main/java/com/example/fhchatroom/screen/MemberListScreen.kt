@@ -59,6 +59,7 @@ import com.example.fhchatroom.data.FriendshipStatus
 import com.example.fhchatroom.data.Result
 import com.example.fhchatroom.data.Room
 import com.example.fhchatroom.data.User
+import com.example.fhchatroom.data.toRoomOrNull
 import com.example.fhchatroom.data.toUserOrNull
 import com.example.fhchatroom.viewmodel.FriendsViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -130,7 +131,7 @@ fun MemberListScreen(
                     return@addSnapshotListener
                 }
                 if (snap != null && snap.exists()) {
-                    val fetchedRoom = snap.toObject(Room::class.java)
+                    val fetchedRoom = snap.toRoomOrNull()
                     room = fetchedRoom
                     val emails = fetchedRoom?.members ?: emptyList()
 

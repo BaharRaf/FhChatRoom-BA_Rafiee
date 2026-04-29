@@ -57,7 +57,6 @@ dependencies {
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.firebase.database.ktx)
     implementation(libs.androidx.lifecycle.process)
-    implementation(libs.firebase.inappmessaging.ktx)
     implementation(libs.androidx.room.runtime.android)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.androidx.animation.core.android)
@@ -81,11 +80,5 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation("com.google.firebase:firebase-inappmessaging-ktx")
     implementation ("androidx.compose.material:material-icons-extended")
-
-    implementation("com.google.firebase:firebase-inappmessaging-ktx")
-
-
-
 }
