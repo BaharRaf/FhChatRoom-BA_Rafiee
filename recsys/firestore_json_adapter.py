@@ -15,6 +15,26 @@ from recsys.models import utc_timestamp
 from recsys.synthetic_data import STUDY_PATH_TOPICS
 
 
+FIRESTORE_STUDY_PATH_TOPICS = {
+    **STUDY_PATH_TOPICS,
+    "Angewandte Elektronik und Technische Informatik": STUDY_PATH_TOPICS["Applied Electronics"],
+    "Bioengineering": [
+        "bioprocess", "biochemistry", "microbiology", "cell", "lab", "measurement", "engineering"
+    ],
+    "Gesundheits- und Krankenpflege": STUDY_PATH_TOPICS["Health Care and Nursing"],
+    "Green Mobility": [
+        "mobility", "electromobility", "battery", "charging", "automotive", "infrastructure", "sustainability"
+    ],
+    "Physiotherapie": [
+        "anatomy", "rehabilitation", "movement", "therapy", "clinical", "exercise", "assessment"
+    ],
+    "Public Management": [
+        "policy", "governance", "administration", "law", "budget", "organization", "management"
+    ],
+    "Soziale Arbeit": STUDY_PATH_TOPICS["Social Work"],
+}
+
+
 def _load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -58,7 +78,7 @@ def _reaction_count(value: Any) -> int:
 
 
 def _default_topics_for_study_path(study_path: str) -> list[str]:
-    topics = STUDY_PATH_TOPICS.get(study_path, [])
+    topics = FIRESTORE_STUDY_PATH_TOPICS.get(study_path, [])
     return topics[:3] if topics else ["general", "collaboration", "study"]
 
 
@@ -203,4 +223,3 @@ def dataset_from_firestore_json(
         generated_at=utc_timestamp(),
         seed=seed,
     )
-

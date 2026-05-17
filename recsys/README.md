@@ -1,5 +1,10 @@
 # Local Recsys Demo
 
+Compatibility note:
+
+- The preferred package for new thesis work is now `ai_pipeline/`.
+- The original `recsys/` package remains available so older commands and tests keep working.
+
 This package is the first zero-cost BA2 recommender slice. It runs entirely on your machine and does not call Firebase, paid APIs, or cloud GPUs.
 
 ## What it does

@@ -29,6 +29,10 @@ class FirestoreJsonAdapterTest(unittest.TestCase):
         anna = self.dataset.students["anna@stud.fh-campuswien.ac.at"]
         self.assertIn("room-algorithms", anna.joined_group_ids)
 
+    def test_unknown_fixture_paths_keep_topic_defaults_working(self) -> None:
+        anna = self.dataset.students["anna@stud.fh-campuswien.ac.at"]
+        self.assertEqual(len(anna.preferred_topics), 3)
+
     def test_payload_matches_android_contract(self) -> None:
         payloads = build_firestore_payloads(self.dataset, self.hin, top_k=2)
         self.assertIn("anna@stud.fh-campuswien.ac.at", payloads)
