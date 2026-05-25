@@ -388,10 +388,11 @@ def build_graphsage_firestore_payloads(
     hin: HINGraph,
     training_result: GraphSAGETrainingResult,
     top_k: int = 10,
+    use_source_student_ids: bool = True,
 ) -> dict[str, dict[str, object]]:
     recommendations = build_graphsage_recommendations(dataset, hin, training_result, top_k=top_k)
     return {
-        student_id: {
+        (dataset.source_student_id_for(student_id) if use_source_student_ids else student_id): {
             "recommendedRoomIds": [item["groupId"] for item in ranked],
             "recommendationsUpdatedAt": training_result.trained_at_ms,
             "recommendationSource": "GRAPH_SAGE_LOCAL",

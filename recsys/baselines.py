@@ -132,18 +132,20 @@ def build_firestore_payloads(
     hin: HINGraph,
     top_k: int = 10,
     recommendation_source: str = "CONTENT_BASED",
+    use_source_student_ids: bool = True,
 ) -> dict[str, dict[str, object]]:
     generated_at = int(time.time() * 1000)
     payloads: dict[str, dict[str, object]] = {}
 
     for student_id in dataset.students:
+        payload_student_id = dataset.source_student_id_for(student_id) if use_source_student_ids else student_id
         recommendations = recommend_groups_for_student(
             dataset=dataset,
             hin=hin,
             student_id=student_id,
             top_k=top_k,
         )
-        payloads[student_id] = {
+        payloads[payload_student_id] = {
             "recommendedRoomIds": [recommendation.group_id for recommendation in recommendations],
             "recommendationsUpdatedAt": generated_at,
             "recommendationSource": recommendation_source,
@@ -171,4 +173,3 @@ def build_detailed_recommendations(
         ]
 
     return detailed
-

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -33,6 +34,29 @@ FIRESTORE_STUDY_PATH_TOPICS = {
     ],
     "Soziale Arbeit": STUDY_PATH_TOPICS["Social Work"],
 }
+
+DEFAULT_PSEUDONYM_SALT = "fhchatroom-ba2-local"
+
+
+class StudentIdMapper:
+    def __init__(self, pseudonymize: bool, salt: str = DEFAULT_PSEUDONYM_SALT) -> None:
+        self.pseudonymize = pseudonymize
+        self.salt = salt
+        self.source_by_internal: dict[str, str] = {}
+
+    def internal_id_for(self, source_id: str) -> str:
+        cleaned_source_id = source_id.strip()
+        if not cleaned_source_id:
+            return ""
+        if not self.pseudonymize:
+            return cleaned_source_id
+
+        digest = hashlib.sha256(
+            f"{self.salt}:{cleaned_source_id.lower()}".encode("utf-8")
+        ).hexdigest()
+        internal_id = f"student-{digest[:16]}"
+        self.source_by_internal.setdefault(internal_id, cleaned_source_id)
+        return internal_id
 
 
 def _load_json(path: Path) -> Any:
@@ -98,18 +122,25 @@ def dataset_from_firestore_json(
     rooms_path: str | Path,
     messages_path: str | Path,
     seed: int = 0,
+    pseudonymize_students: bool = True,
+    pseudonym_salt: str = DEFAULT_PSEUDONYM_SALT,
 ) -> SyntheticDataset:
     users_payload = _normalize_documents(_load_json(Path(users_path)))
     rooms_payload = _normalize_documents(_load_json(Path(rooms_path)))
     messages_payload = _normalize_documents(_load_json(Path(messages_path)))
 
+    student_id_mapper = StudentIdMapper(
+        pseudonymize=pseudonymize_students,
+        salt=pseudonym_salt,
+    )
     students: dict[str, Student] = {}
     groups: dict[str, StudyGroup] = {}
     messages: list[Message] = []
     room_message_texts: dict[str, list[str]] = {}
 
     for user in users_payload:
-        student_id = str(user.get("email") or user.get("id") or "").strip()
+        source_student_id = str(user.get("email") or user.get("id") or "").strip()
+        student_id = student_id_mapper.internal_id_for(source_student_id)
         if not student_id:
             continue
 
@@ -117,8 +148,8 @@ def dataset_from_firestore_json(
         semester = _coerce_int(user.get("semester"), default=0)
         students[student_id] = Student(
             id=student_id,
-            first_name=str(user.get("firstName") or user.get("first_name") or "").strip(),
-            last_name=str(user.get("lastName") or user.get("last_name") or "").strip(),
+            first_name="" if pseudonymize_students else str(user.get("firstName") or user.get("first_name") or "").strip(),
+            last_name="" if pseudonymize_students else str(user.get("lastName") or user.get("last_name") or "").strip(),
             study_path=study_path,
             semester=semester,
             semester_bucket=semester_bucket_for(semester),
@@ -128,7 +159,8 @@ def dataset_from_firestore_json(
 
     for message_doc in messages_payload:
         room_id = str(message_doc.get("roomId") or message_doc.get("groupId") or "").strip()
-        sender_id = str(message_doc.get("senderId") or message_doc.get("senderEmail") or "").strip()
+        source_sender_id = str(message_doc.get("senderId") or message_doc.get("senderEmail") or "").strip()
+        sender_id = student_id_mapper.internal_id_for(source_sender_id)
         message_id = str(message_doc.get("id") or "").strip()
         text = str(message_doc.get("text") or "").strip()
 
@@ -164,7 +196,11 @@ def dataset_from_firestore_json(
         if not group_id:
             continue
 
-        member_ids = [str(member).strip() for member in room.get("members", []) if str(member).strip()]
+        member_ids = [
+            student_id_mapper.internal_id_for(str(member))
+            for member in room.get("members", [])
+            if str(member).strip()
+        ]
         category = str(room.get("category") or "").strip()
         description = str(room.get("description") or "").strip()
         topic_tags = list(room.get("topicTags") or [])
@@ -222,4 +258,5 @@ def dataset_from_firestore_json(
         messages=messages,
         generated_at=utc_timestamp(),
         seed=seed,
+        source_student_ids=student_id_mapper.source_by_internal if pseudonymize_students else {},
     )

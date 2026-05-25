@@ -74,12 +74,20 @@ class SyntheticDataset:
     messages: list[Message]
     generated_at: str
     seed: int
+    source_student_ids: dict[str, str] = field(default_factory=dict, repr=False)
+
+    def source_student_id_for(self, student_id: str) -> str:
+        return self.source_student_ids.get(student_id, student_id)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "config": asdict(self.config),
             "generatedAt": self.generated_at,
             "seed": self.seed,
+            "privacy": {
+                "studentIdentifiers": "pseudonymized" if self.source_student_ids else "internal",
+                "sourceIdentifierMappingIncluded": False,
+            },
             "students": {student_id: asdict(student) for student_id, student in self.students.items()},
             "groups": {group_id: asdict(group) for group_id, group in self.groups.items()},
             "messages": [asdict(message) for message in self.messages],
@@ -153,4 +161,3 @@ class Recommendation:
                 "relevance": round(self.breakdown.relevance, 6),
             },
         }
-

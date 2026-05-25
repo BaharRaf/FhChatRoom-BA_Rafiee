@@ -314,10 +314,11 @@ def build_lightgcn_firestore_payloads(
     dataset: SyntheticDataset,
     training_result: LightGCNTrainingResult,
     top_k: int = 10,
+    use_source_student_ids: bool = True,
 ) -> dict[str, dict[str, object]]:
     recommendations = build_lightgcn_recommendations(dataset, training_result, top_k=top_k)
     return {
-        student_id: {
+        (dataset.source_student_id_for(student_id) if use_source_student_ids else student_id): {
             "recommendedRoomIds": [item["groupId"] for item in ranked],
             "recommendationsUpdatedAt": training_result.trained_at_ms,
             "recommendationSource": "LIGHT_GCN_LOCAL",
