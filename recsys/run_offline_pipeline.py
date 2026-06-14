@@ -8,6 +8,7 @@ from pathlib import Path
 from recsys.baselines import build_detailed_recommendations
 from recsys.baselines import build_firestore_payloads
 from recsys.evaluation import build_leave_one_out_targets
+from recsys.evaluation import build_temporal_onboarding_targets
 from recsys.evaluation import compare_metrics
 from recsys.evaluation import evaluate_recommendations
 from recsys.evaluation import robustness_ratio
@@ -42,7 +43,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--students", type=int, default=120)
     parser.add_argument("--groups", type=int, default=24)
     parser.add_argument("--topics", type=int, default=30)
-    parser.add_argument("--messages-per-day", type=int, default=250)
+    parser.add_argument("--messages-per-day", type=int, default=30)
     parser.add_argument("--days", type=int, default=14)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--epochs", type=int, default=120)
@@ -53,10 +54,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lightgcn-learning-rate", type=float)
     parser.add_argument("--negative-samples-per-positive", type=int, default=3)
     parser.add_argument("--hard-negative-ratio", type=float, default=0.67)
+    parser.add_argument("--cold-start-interaction-threshold", type=int, default=5)
+    parser.add_argument("--min-warm-students", type=int, default=1)
+    parser.add_argument("--min-cold-students", type=int, default=1)
+    parser.add_argument("--min-held-out-users", type=int, default=1)
+    parser.add_argument(
+        "--skip-quality-check",
+        action="store_true",
+        help="Run even if the dataset has no usable warm/cold evaluation split.",
+    )
     parser.add_argument("--hidden-dim", type=int, default=32)
     parser.add_argument("--embedding-dim", type=int, default=16)
     parser.add_argument("--lightgcn-layers", type=int, default=3)
     parser.add_argument("--top-k", type=int, default=10)
+    parser.add_argument(
+        "--evaluation-protocol",
+        choices=["temporal-onboarding", "leave-one-out"],
+        default="temporal-onboarding",
+    )
+    parser.add_argument("--cold-start-ratio", type=float, default=0.25)
+    parser.add_argument("--min-temporal-cold-users", type=int, default=1)
     parser.add_argument("--users")
     parser.add_argument("--rooms")
     parser.add_argument("--messages")
@@ -98,7 +115,72 @@ def _graphsage_config(args: argparse.Namespace) -> GraphSAGEConfig:
         seed=args.seed,
         negative_samples_per_positive=args.negative_samples_per_positive,
         hard_negative_ratio=args.hard_negative_ratio,
+        cold_start_interaction_threshold=args.cold_start_interaction_threshold,
     )
+
+
+def _preflight_quality_report(args: argparse.Namespace, dataset: SyntheticDataset) -> dict[str, object]:
+    if args.evaluation_protocol == "temporal-onboarding":
+        train_dataset, held_out, warm_student_ids, cold_student_ids = build_temporal_onboarding_targets(
+            dataset=deepcopy(dataset),
+            cold_start_ratio=args.cold_start_ratio,
+            min_cold_start_users=args.min_temporal_cold_users,
+            seed=args.seed,
+        )
+    else:
+        train_dataset, held_out = build_leave_one_out_targets(deepcopy(dataset))
+        hin_for_split = build_hin(train_dataset, max_topics=args.topics)
+        prep_for_split = prepare_graphsage_training_data(
+            dataset=train_dataset,
+            hin=hin_for_split,
+            config=_graphsage_config(args),
+        )
+        warm_student_ids = prep_for_split.warm_student_ids
+        cold_student_ids = prep_for_split.cold_student_ids
+
+    hin = build_hin(train_dataset, max_topics=args.topics)
+    prep = prepare_graphsage_training_data(
+        dataset=train_dataset,
+        hin=hin,
+        config=_graphsage_config(args),
+    )
+    return {
+        "warmStudents": len(warm_student_ids),
+        "coldStudents": len(cold_student_ids),
+        "heldOutUsers": len(held_out),
+        "positivePairs": len(prep.positive_pairs),
+        "trainingTriplets": len(prep.training_triplets),
+    }
+
+
+def _quality_issues(args: argparse.Namespace, report: dict[str, object]) -> list[str]:
+    checks = [
+        ("warmStudents", args.min_warm_students, "warm students"),
+        ("coldStudents", args.min_cold_students, "cold-start students"),
+        ("heldOutUsers", args.min_held_out_users, "held-out users"),
+        ("positivePairs", 1, "positive student-group pairs"),
+        ("trainingTriplets", 1, "training triplets"),
+    ]
+    issues: list[str] = []
+    for key, minimum, label in checks:
+        value = int(report.get(key, 0))
+        if value < minimum:
+            issues.append(f"{label}: expected at least {minimum}, got {value}")
+    return issues
+
+
+def _validate_quality(args: argparse.Namespace, report: dict[str, object]) -> None:
+    if args.skip_quality_check:
+        return
+
+    issues = _quality_issues(args, report)
+    if issues:
+        formatted_issues = "\n- ".join(issues)
+        raise SystemExit(
+            "Dataset quality check failed. Adjust synthetic generation parameters "
+            "or pass --skip-quality-check for debugging.\n"
+            f"- {formatted_issues}"
+        )
 
 
 def _train_graphsage(args: argparse.Namespace, dataset: SyntheticDataset, hin):
@@ -134,7 +216,18 @@ def _train_lightgcn(args: argparse.Namespace, prep):
 
 
 def _evaluation_report(args: argparse.Namespace, dataset: SyntheticDataset) -> dict[str, object]:
-    train_dataset, held_out = build_leave_one_out_targets(deepcopy(dataset))
+    if args.evaluation_protocol == "temporal-onboarding":
+        train_dataset, held_out, warm_student_ids, cold_student_ids = build_temporal_onboarding_targets(
+            dataset=deepcopy(dataset),
+            cold_start_ratio=args.cold_start_ratio,
+            min_cold_start_users=args.min_temporal_cold_users,
+            seed=args.seed,
+        )
+    else:
+        train_dataset, held_out = build_leave_one_out_targets(deepcopy(dataset))
+        warm_student_ids = []
+        cold_student_ids = []
+
     hin = build_hin(train_dataset, max_topics=args.topics)
 
     baseline_ranked = {
@@ -147,6 +240,10 @@ def _evaluation_report(args: argparse.Namespace, dataset: SyntheticDataset) -> d
     }
 
     prep, graphsage_result = _train_graphsage(args, train_dataset, hin)
+    if args.evaluation_protocol == "leave-one-out":
+        warm_student_ids = prep.warm_student_ids
+        cold_student_ids = prep.cold_student_ids
+
     graphsage_ranked = {
         student_id: [item["groupId"] for item in ranked]
         for student_id, ranked in build_graphsage_recommendations(
@@ -172,14 +269,14 @@ def _evaluation_report(args: argparse.Namespace, dataset: SyntheticDataset) -> d
         train_dataset,
         baseline_ranked,
         held_out,
-        user_ids=prep.warm_student_ids,
+        user_ids=warm_student_ids,
         k=args.top_k,
     )
     baseline_cold = evaluate_recommendations(
         train_dataset,
         baseline_ranked,
         held_out,
-        user_ids=prep.cold_student_ids,
+        user_ids=cold_student_ids,
         k=args.top_k,
     )
     graphsage_all = evaluate_recommendations(train_dataset, graphsage_ranked, held_out, k=args.top_k)
@@ -187,14 +284,14 @@ def _evaluation_report(args: argparse.Namespace, dataset: SyntheticDataset) -> d
         train_dataset,
         graphsage_ranked,
         held_out,
-        user_ids=prep.warm_student_ids,
+        user_ids=warm_student_ids,
         k=args.top_k,
     )
     graphsage_cold = evaluate_recommendations(
         train_dataset,
         graphsage_ranked,
         held_out,
-        user_ids=prep.cold_student_ids,
+        user_ids=cold_student_ids,
         k=args.top_k,
     )
     lightgcn_all = evaluate_recommendations(train_dataset, lightgcn_ranked, held_out, k=args.top_k)
@@ -202,19 +299,19 @@ def _evaluation_report(args: argparse.Namespace, dataset: SyntheticDataset) -> d
         train_dataset,
         lightgcn_ranked,
         held_out,
-        user_ids=prep.warm_student_ids,
+        user_ids=warm_student_ids,
         k=args.top_k,
     )
     lightgcn_cold = evaluate_recommendations(
         train_dataset,
         lightgcn_ranked,
         held_out,
-        user_ids=prep.cold_student_ids,
+        user_ids=cold_student_ids,
         k=args.top_k,
     )
 
     return {
-        "evaluationProtocol": "leave_one_out_membership_holdout",
+        "evaluationProtocol": args.evaluation_protocol,
         "baseline": {
             "all": baseline_all.to_dict(),
             "warm": baseline_warm.to_dict(),
@@ -249,8 +346,8 @@ def _evaluation_report(args: argparse.Namespace, dataset: SyntheticDataset) -> d
             "cold": compare_metrics(lightgcn_cold, graphsage_cold),
         },
         "segments": {
-            "warmStudents": len(prep.warm_student_ids),
-            "coldStudents": len(prep.cold_student_ids),
+            "warmStudents": len(warm_student_ids),
+            "coldStudents": len(cold_student_ids),
         },
         "trainingData": {
             "positivePairs": len(prep.positive_pairs),
@@ -271,6 +368,9 @@ def main() -> None:
     output_dir = Path(args.output_dir)
 
     dataset = _load_dataset(args)
+    quality_report = _preflight_quality_report(args, dataset)
+    _validate_quality(args, quality_report)
+
     hin = build_hin(dataset=dataset, max_topics=args.topics)
 
     baseline_recommendations = build_detailed_recommendations(
@@ -309,12 +409,14 @@ def main() -> None:
     evaluation_report = _evaluation_report(args, dataset)
     manifest = {
         "mode": args.mode,
+        "evaluationProtocol": args.evaluation_protocol,
         "topK": args.top_k,
         "privacy": dataset.to_dict()["privacy"],
         "students": len(dataset.students),
         "groups": len(dataset.groups),
         "messages": len(dataset.messages),
         "topics": len(hin.selected_topics),
+        "quality": quality_report,
         "outputs": [
             "snapshot_dataset.json",
             "hin_summary.json",

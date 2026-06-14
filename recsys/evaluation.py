@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import random
 from dataclasses import dataclass
 from statistics import mean
 
@@ -126,3 +127,66 @@ def build_leave_one_out_targets(dataset: SyntheticDataset) -> tuple[SyntheticDat
     ]
 
     return dataset, held_out_group_ids
+
+
+def build_temporal_onboarding_targets(
+    dataset: SyntheticDataset,
+    cold_start_ratio: float = 0.25,
+    min_cold_start_users: int = 1,
+    seed: int = 42,
+) -> tuple[SyntheticDataset, dict[str, list[str]], list[str], list[str]]:
+    rng = random.Random(seed)
+    student_ids = sorted(dataset.students)
+    if not student_ids:
+        return dataset, {}, [], []
+
+    requested_cold_users = max(
+        min_cold_start_users,
+        round(len(student_ids) * cold_start_ratio),
+    )
+    requested_cold_users = min(requested_cold_users, max(len(student_ids) - 1, 1))
+    cold_student_ids = sorted(rng.sample(student_ids, k=requested_cold_users))
+    cold_student_id_set = set(cold_student_ids)
+
+    held_out_group_ids: dict[str, list[str]] = {}
+    held_out_pairs: set[tuple[str, str]] = set()
+    warm_student_ids: list[str] = []
+
+    for student_id in cold_student_ids:
+        student = dataset.students[student_id]
+        hidden_group_ids = list(student.joined_group_ids)
+        if not hidden_group_ids:
+            continue
+        held_out_group_ids[student_id] = hidden_group_ids
+        for group_id in hidden_group_ids:
+            held_out_pairs.add((student_id, group_id))
+            if group_id in dataset.groups and student_id in dataset.groups[group_id].member_ids:
+                dataset.groups[group_id].member_ids.remove(student_id)
+        student.joined_group_ids = []
+
+    for student_id in student_ids:
+        if student_id in cold_student_id_set:
+            continue
+        student = dataset.students[student_id]
+        if len(student.joined_group_ids) <= 1:
+            continue
+        held_out_group_id = student.joined_group_ids.pop()
+        held_out_group_ids[student_id] = [held_out_group_id]
+        held_out_pairs.add((student_id, held_out_group_id))
+        warm_student_ids.append(student_id)
+        if student_id in dataset.groups[held_out_group_id].member_ids:
+            dataset.groups[held_out_group_id].member_ids.remove(student_id)
+
+    dataset.messages = [
+        message
+        for message in dataset.messages
+        if message.sender_id not in cold_student_id_set
+        and (message.sender_id, message.group_id) not in held_out_pairs
+    ]
+
+    evaluated_cold_student_ids = [
+        student_id
+        for student_id in cold_student_ids
+        if student_id in held_out_group_ids
+    ]
+    return dataset, held_out_group_ids, sorted(warm_student_ids), evaluated_cold_student_ids

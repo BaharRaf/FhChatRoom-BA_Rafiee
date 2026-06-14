@@ -6,6 +6,7 @@ from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
 from statistics import median
+from types import SimpleNamespace
 
 import numpy as np
 
@@ -14,6 +15,10 @@ from recsys.models import HINGraph
 from recsys.models import Recommendation
 from recsys.models import RecommendationBreakdown
 from recsys.models import SyntheticDataset
+from recsys.privacy import DPConfig
+from recsys.privacy import GradientDPConfig
+from recsys.privacy import clip_and_noise_gradient
+from recsys.privacy import perturb_relation_matrix
 
 
 @dataclass(frozen=True)
@@ -35,6 +40,8 @@ class GraphSAGETrainConfig:
             "CONTAINS": 0.75,
         }
     )
+    dp: DPConfig | None = None
+    dp_gradient: GradientDPConfig | None = None
     seed: int = 42
 
 
@@ -46,6 +53,11 @@ class GraphSAGETrainingResult:
     embeddings: dict[str, list[float]]
     final_loss: float
     trained_at_ms: int
+    # Trained aggregation weights and the feature catalogue: together they
+    # enable inductive inference for students who were not part of the
+    # training graph (see embed_cold_student).
+    weights: list[np.ndarray] = field(default_factory=list)
+    feature_names: list[str] = field(default_factory=list)
 
     def summary(self) -> dict[str, object]:
         return {
@@ -70,15 +82,36 @@ def _normalize_adjacency(matrix: np.ndarray) -> np.ndarray:
     return matrix / degree
 
 
+def _cap_neighbors(
+    neighbors: list[str],
+    degree_bound: int,
+    rng: np.random.Generator,
+) -> list[str]:
+    """Deterministically subsamples a neighbour list to the DP degree bound.
+
+    The Gaussian-mechanism sensitivity in :class:`recsys.privacy.DPConfig`
+    assumes every aggregation row has degree at most ``degree_bound``; this
+    enforces that assumption rather than merely stating it.
+    """
+    if degree_bound <= 0 or len(neighbors) <= degree_bound:
+        return neighbors
+    chosen = rng.choice(len(neighbors), size=degree_bound, replace=False)
+    return [neighbors[index] for index in sorted(chosen)]
+
+
 def _build_relation_matrix(
     neighbors_by_node: dict[str, list[str]],
     node_index: dict[str, int],
     size: int,
+    degree_bound: int = 0,
+    rng: np.random.Generator | None = None,
 ) -> np.ndarray:
     matrix = np.zeros((size, size), dtype=np.float64)
-    for source_id, neighbors in neighbors_by_node.items():
+    for source_id, neighbors in sorted(neighbors_by_node.items()):
         if source_id not in node_index:
             continue
+        if degree_bound and rng is not None:
+            neighbors = _cap_neighbors(sorted(neighbors), degree_bound, rng)
         source_index = node_index[source_id]
         for neighbor_id in neighbors:
             if neighbor_id in node_index:
@@ -95,12 +128,23 @@ def _build_matrices(
     features = np.asarray([prep.node_features[node_id] for node_id in node_order], dtype=np.float64)
     features = _normalize_rows(features)
 
+    dp_rng = np.random.default_rng(config.dp.seed) if config.dp is not None else None
+
     adjacency = np.eye(len(node_order), dtype=np.float64) * config.self_loop_weight
-    for relation, neighbors_by_node in prep.relation_adjacency.items():
+    for relation, neighbors_by_node in sorted(prep.relation_adjacency.items()):
         relation_weight = config.relation_weights.get(relation, 1.0)
         if relation_weight <= 0.0:
             continue
-        adjacency += relation_weight * _build_relation_matrix(neighbors_by_node, node_index, len(node_order))
+        relation_matrix = _build_relation_matrix(
+            neighbors_by_node,
+            node_index,
+            len(node_order),
+            degree_bound=config.dp.degree_bound if config.dp is not None else 0,
+            rng=dp_rng,
+        )
+        if config.dp is not None and dp_rng is not None:
+            relation_matrix = perturb_relation_matrix(relation_matrix, relation, config.dp, dp_rng)
+        adjacency += relation_weight * relation_matrix
 
     adjacency = _normalize_adjacency(adjacency)
     return node_order, node_index, features, adjacency
@@ -150,26 +194,26 @@ def _ranking_loss_and_gradient(
     if len(triplet_indices) == 0:
         return 0.0, grad_embeddings
 
-    loss = 0.0
+    student_indices = triplet_indices[:, 0]
+    positive_indices = triplet_indices[:, 1]
+    negative_indices = triplet_indices[:, 2]
 
-    for student_index, positive_group_index, negative_group_index in triplet_indices:
-        student_embedding = embeddings[student_index]
-        positive_group_embedding = embeddings[positive_group_index]
-        negative_group_embedding = embeddings[negative_group_index]
-        score_difference = float(
-            np.dot(student_embedding, positive_group_embedding)
-            - np.dot(student_embedding, negative_group_embedding)
-        )
-        score_difference = max(min(score_difference, 20.0), -20.0)
-        probability = 1.0 / (1.0 + math.exp(-score_difference))
-        coeff = probability - 1.0
-        loss += -math.log(max(probability, 1e-9))
-        grad_embeddings[student_index] += coeff * (positive_group_embedding - negative_group_embedding)
-        grad_embeddings[positive_group_index] += coeff * student_embedding
-        grad_embeddings[negative_group_index] -= coeff * student_embedding
+    student_vectors = embeddings[student_indices]
+    positive_vectors = embeddings[positive_indices]
+    negative_vectors = embeddings[negative_indices]
+
+    score_difference = np.sum(student_vectors * (positive_vectors - negative_vectors), axis=1)
+    score_difference = np.clip(score_difference, -20.0, 20.0)
+    probabilities = 1.0 / (1.0 + np.exp(-score_difference))
+    safe_probabilities = np.clip(probabilities, 1e-9, 1.0)
+    loss = float(-np.mean(np.log(safe_probabilities)))
+
+    coefficients = (probabilities - 1.0).reshape(-1, 1)
+    np.add.at(grad_embeddings, student_indices, coefficients * (positive_vectors - negative_vectors))
+    np.add.at(grad_embeddings, positive_indices, coefficients * student_vectors)
+    np.add.at(grad_embeddings, negative_indices, -coefficients * student_vectors)
 
     grad_embeddings /= len(triplet_indices)
-    loss /= len(triplet_indices)
     return loss, grad_embeddings
 
 
@@ -191,7 +235,10 @@ def _backward(
         layer_input = caches[layer_index]["input"]
 
         activation_grad = current_grad * (1.0 - np.tanh(pre_activation) ** 2)
-        gradients[layer_index] = (layer_input.T @ activation_grad) / max(layer_input.shape[0], 1)
+        # The loss gradient is already a mean over training triplets; an extra
+        # division by the node count would shrink updates with graph size and
+        # stall training on protocol-scale graphs.
+        gradients[layer_index] = layer_input.T @ activation_grad
         gradients[layer_index] += weight_decay * weight
 
         grad_input = activation_grad @ weight.T
@@ -221,6 +268,11 @@ def train_graphsage_embeddings(
         current_dim = output_dim
 
     losses: list[float] = []
+    gradient_dp_rng = (
+        np.random.default_rng(config.dp_gradient.seed)
+        if config.dp_gradient is not None
+        else None
+    )
 
     for _ in range(config.epochs):
         caches, embeddings = _forward(features, adjacency, weights)
@@ -234,6 +286,8 @@ def train_graphsage_embeddings(
             weight_decay=config.weight_decay,
         )
         for index, gradient in enumerate(gradients):
+            if config.dp_gradient is not None and gradient_dp_rng is not None:
+                gradient = clip_and_noise_gradient(gradient, config.dp_gradient, gradient_dp_rng)
             weights[index] -= config.learning_rate * gradient
         losses.append(loss)
 
@@ -250,7 +304,74 @@ def train_graphsage_embeddings(
         embeddings=embedding_map,
         final_loss=losses[-1] if losses else 0.0,
         trained_at_ms=int(time.time() * 1000),
+        weights=[weight.copy() for weight in weights],
+        feature_names=list(prep.feature_names),
     )
+
+
+def embed_cold_student(
+    result: GraphSAGETrainingResult,
+    prep: GraphSAGEPreparedData,
+    student,
+    max_semester: int = 6,
+    topic_weights: dict[str, float] | None = None,
+) -> list[float]:
+    """Embeds a student who was NOT part of the training graph.
+
+    This is the inductive path validated by the thesis: the trained weight
+    matrices are shared across nodes, so a brand-new student is embedded by
+    appending their node to the graph and running a single forward pass --
+    no retraining. A strictly cold student (attributes only) contributes a
+    self-loop-only row; if declared topical interests or first-message
+    topics are known (``topic_weights``), the corresponding INTERESTED_IN
+    edges to existing Topic nodes are included, exactly as the trainer
+    would build them.
+    """
+    if not result.weights or not result.feature_names:
+        raise ValueError("training result does not carry weights; retrain with this version")
+    if student.id in prep.node_features:
+        raise ValueError(f"student {student.id} is already part of the training graph")
+
+    available = set(result.feature_names)
+    updates: dict[str, float] = {
+        "numeric:semester_norm": student.semester / max(max_semester, 1),
+        "numeric:is_student": 1.0,
+    }
+    for one_hot in (
+        f"study_path:{student.study_path}",
+        f"semester_bucket:{student.semester_bucket}",
+    ):
+        if one_hot in available:
+            updates[one_hot] = 1.0
+    interest_topics: list[str] = []
+    for topic, weight in (topic_weights or {}).items():
+        key = f"topic:{topic}"
+        if key in available:
+            updates[key] = weight
+        if key in prep.node_features:
+            interest_topics.append(key)
+
+    feature_vector = [updates.get(name, 0.0) for name in result.feature_names]
+
+    # Extend the graph by the single new node (the originals stay untouched).
+    extended_features = dict(prep.node_features)
+    extended_features[student.id] = feature_vector
+    extended_relations = {
+        relation: dict(neighbors) for relation, neighbors in prep.relation_adjacency.items()
+    }
+    if interest_topics:
+        interested = extended_relations.setdefault("INTERESTED_IN", {})
+        interested[student.id] = sorted(interest_topics)
+        for topic_id in interest_topics:
+            interested[topic_id] = sorted(set(interested.get(topic_id, [])) | {student.id})
+
+    extended_prep = SimpleNamespace(
+        node_features=extended_features,
+        relation_adjacency=extended_relations,
+    )
+    node_order, node_index, features, adjacency = _build_matrices(extended_prep, result.config)
+    _, embeddings = _forward(features, adjacency, result.weights)
+    return embeddings[node_index[student.id]].tolist()
 
 
 def _cosine_similarity(left: np.ndarray, right: np.ndarray) -> float:

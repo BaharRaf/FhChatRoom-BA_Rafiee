@@ -78,10 +78,18 @@ class OfflinePipelineCliTest(unittest.TestCase):
                 lightgcn_learning_rate=None,
                 negative_samples_per_positive=2,
                 hard_negative_ratio=0.67,
+                cold_start_interaction_threshold=5,
+                min_warm_students=0,
+                min_cold_students=0,
+                min_held_out_users=1,
+                skip_quality_check=False,
                 hidden_dim=16,
                 embedding_dim=8,
                 lightgcn_layers=2,
                 top_k=3,
+                evaluation_protocol="temporal-onboarding",
+                cold_start_ratio=0.25,
+                min_temporal_cold_users=1,
                 users=None,
                 rooms=None,
                 messages=None,
@@ -94,10 +102,54 @@ class OfflinePipelineCliTest(unittest.TestCase):
                 main()
 
             report = json.loads((Path(output_dir) / "evaluation_report.json").read_text(encoding="utf-8"))
-            self.assertEqual(report["evaluationProtocol"], "leave_one_out_membership_holdout")
+            self.assertEqual(report["evaluationProtocol"], "temporal-onboarding")
             self.assertIn("baseline", report)
             self.assertIn("graphsageLocal", report)
             self.assertIn("lightgcnLocal", report)
+
+    def test_quality_check_rejects_missing_cold_start_segment(self) -> None:
+        with TemporaryDirectory() as output_dir:
+            args = Namespace(
+                mode="synthetic",
+                students=20,
+                groups=8,
+                topics=10,
+                messages_per_day=200,
+                days=5,
+                seed=4,
+                epochs=3,
+                learning_rate=0.05,
+                graphsage_epochs=None,
+                graphsage_learning_rate=None,
+                lightgcn_epochs=None,
+                lightgcn_learning_rate=None,
+                negative_samples_per_positive=2,
+                hard_negative_ratio=0.67,
+                cold_start_interaction_threshold=5,
+                min_warm_students=1,
+                min_cold_students=1,
+                min_held_out_users=1,
+                skip_quality_check=False,
+                hidden_dim=16,
+                embedding_dim=8,
+                lightgcn_layers=2,
+                top_k=3,
+                evaluation_protocol="leave-one-out",
+                cold_start_ratio=0.25,
+                min_temporal_cold_users=1,
+                users=None,
+                rooms=None,
+                messages=None,
+                pseudonym_salt="test",
+                no_pseudonymize_students=False,
+                output_dir=output_dir,
+            )
+
+            with patch("recsys.run_offline_pipeline.parse_args", return_value=args), redirect_stdout(io.StringIO()):
+                with self.assertRaises(SystemExit) as error:
+                    main()
+
+            self.assertIn("cold-start students", str(error.exception))
 
 
 if __name__ == "__main__":

@@ -204,7 +204,30 @@ def _topic_vectors(hin: HINGraph, feature_names: list[str]) -> dict[str, list[fl
     return vectors
 
 
-def _build_adjacency(hin: HINGraph) -> tuple[dict[str, list[str]], dict[str, dict[str, list[str]]], dict[str, int]]:
+def _cap_neighbors(
+    neighbors: set[str],
+    max_neighbors: int,
+    rng: random.Random,
+) -> list[str]:
+    """Caps a neighbourhood at ``max_neighbors`` via deterministic sampling.
+
+    Enforcing the per-node degree bound is what makes the differential-privacy
+    sensitivity analysis in ``privacy.py`` sound: the L2 sensitivity of a
+    row-normalised aggregation row is bounded by sqrt(2)/degree_bound only if
+    the realised degree never exceeds that bound. Sampling is seeded so the
+    capped graph stays reproducible. ``max_neighbors <= 0`` disables capping.
+    """
+    ordered = sorted(neighbors)
+    if max_neighbors <= 0 or len(ordered) <= max_neighbors:
+        return ordered
+    return sorted(rng.sample(ordered, max_neighbors))
+
+
+def _build_adjacency(
+    hin: HINGraph,
+    max_neighbors: int = 0,
+    seed: int = 42,
+) -> tuple[dict[str, list[str]], dict[str, dict[str, list[str]]], dict[str, int]]:
     undirected_neighbors: dict[str, set[str]] = defaultdict(set)
     relation_neighbors: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
     relation_counts: Counter[str] = Counter()
@@ -216,10 +239,14 @@ def _build_adjacency(hin: HINGraph) -> tuple[dict[str, list[str]], dict[str, dic
         relation_neighbors[edge.relation][edge.source].add(edge.target)
         relation_neighbors[edge.relation][edge.target].add(edge.source)
 
-    adjacency = {node_id: sorted(neighbors) for node_id, neighbors in undirected_neighbors.items()}
+    rng = random.Random(seed)
+    adjacency = {
+        node_id: _cap_neighbors(neighbors, max_neighbors, rng)
+        for node_id, neighbors in undirected_neighbors.items()
+    }
     relation_adjacency = {
         relation: {
-            node_id: sorted(neighbors)
+            node_id: _cap_neighbors(neighbors, max_neighbors, rng)
             for node_id, neighbors in neighbors_by_node.items()
         }
         for relation, neighbors_by_node in relation_neighbors.items()
@@ -380,7 +407,9 @@ def prepare_graphsage_training_data(
     node_features.update(_message_vectors(dataset, feature_names))
     node_features.update(_topic_vectors(hin, feature_names))
 
-    adjacency, relation_adjacency, relation_counts = _build_adjacency(hin)
+    adjacency, relation_adjacency, relation_counts = _build_adjacency(
+        hin, max_neighbors=config.max_neighbors, seed=config.seed
+    )
     positive_pairs, negative_pairs, training_triplets, negative_pair_sources = _build_training_pairs(dataset, hin, config)
     warm_student_ids, cold_student_ids = _cold_start_split(dataset, config)
 

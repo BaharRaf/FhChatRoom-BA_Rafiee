@@ -4,6 +4,7 @@ import unittest
 
 from recsys.evaluation import RankingMetrics
 from recsys.evaluation import build_leave_one_out_targets
+from recsys.evaluation import build_temporal_onboarding_targets
 from recsys.evaluation import robustness_ratio
 from recsys.models import DatasetConfig
 from recsys.models import Message
@@ -63,6 +64,39 @@ class EvaluationHelpersTest(unittest.TestCase):
         )
 
         self.assertEqual(robustness_ratio(cold, warm), 0.5)
+
+    def test_temporal_onboarding_strips_cold_start_interactions(self) -> None:
+        dataset = generate_synthetic_dataset(
+            config=DatasetConfig(
+                num_students=20,
+                num_groups=8,
+                num_topics=10,
+                messages_per_day=20,
+                num_days=3,
+                min_groups_per_student=2,
+                max_groups_per_student=3,
+            ),
+            seed=21,
+        )
+
+        train_dataset, held_out, warm_student_ids, cold_student_ids = build_temporal_onboarding_targets(
+            dataset=dataset,
+            cold_start_ratio=0.25,
+            min_cold_start_users=3,
+            seed=21,
+        )
+
+        self.assertGreaterEqual(len(cold_student_ids), 3)
+        self.assertTrue(warm_student_ids)
+        for student_id in cold_student_ids:
+            self.assertIn(student_id, held_out)
+            self.assertEqual(train_dataset.students[student_id].joined_group_ids, [])
+            self.assertFalse(
+                any(message.sender_id == student_id for message in train_dataset.messages)
+            )
+            self.assertTrue(
+                all(student_id not in group.member_ids for group in train_dataset.groups.values())
+            )
 
 
 if __name__ == "__main__":

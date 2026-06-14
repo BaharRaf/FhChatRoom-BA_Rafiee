@@ -126,19 +126,24 @@ def build_hin(dataset: SyntheticDataset, max_topics: int = 50) -> HINGraph:
         group_documents[group.id] = tokenize(text)
 
     for student in dataset.students.values():
-        text = " ".join(messages_by_student.get(student.id, []))
+        text = " ".join([*student.preferred_topics, *messages_by_student.get(student.id, [])])
         student_documents[student.id] = tokenize(text)
 
     selected_topics, group_topic_weights = _compute_tfidf_vectors(group_documents, max_topics=max_topics)
     _, student_topic_weights = _compute_tfidf_vectors(student_documents, max_topics=max_topics)
 
+    selected_topic_set = set(selected_topics)
     for topic in selected_topics:
         topic_id = f"topic:{topic}"
         nodes[topic_id] = HINNode(id=topic_id, node_type="Topic", features={"label": topic})
 
+    # Graph invariant: edges may only reference existing Topic nodes. The
+    # student-side TF-IDF vocabulary can contain terms outside the selected
+    # (group-derived) topic set; those carry no node and must not become
+    # dangling INTERESTED_IN edges.
     for group_id, vector in group_topic_weights.items():
         for topic, weight in vector.items():
-            if weight > 0:
+            if weight > 0 and topic in selected_topic_set:
                 edges.append(
                     HINEdge(
                         source=group_id,
@@ -150,7 +155,7 @@ def build_hin(dataset: SyntheticDataset, max_topics: int = 50) -> HINGraph:
 
     for student_id, vector in student_topic_weights.items():
         for topic, weight in vector.items():
-            if weight > 0:
+            if weight > 0 and topic in selected_topic_set:
                 edges.append(
                     HINEdge(
                         source=student_id,
@@ -167,4 +172,3 @@ def build_hin(dataset: SyntheticDataset, max_topics: int = 50) -> HINGraph:
         student_topic_weights=student_topic_weights,
         selected_topics=selected_topics,
     )
-

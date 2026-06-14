@@ -9,9 +9,12 @@ from recsys.graphsage_prep import GraphSAGEConfig
 from recsys.graphsage_prep import prepare_graphsage_training_data
 from recsys.graphsage_train import GraphSAGETrainConfig
 from recsys.graphsage_train import build_graphsage_firestore_payloads
+from recsys.graphsage_train import embed_cold_student
 from recsys.graphsage_train import train_graphsage_embeddings
 from recsys.hin import build_hin
 from recsys.models import DatasetConfig
+from recsys.models import Student
+from recsys.models import semester_bucket_for
 from recsys.synthetic_data import generate_synthetic_dataset
 
 
@@ -53,6 +56,45 @@ class GraphSAGETrainTest(unittest.TestCase):
         first_student_id = next(iter(self.dataset.students))
         self.assertIn(first_student_id, payloads)
         self.assertEqual(payloads[first_student_id]["recommendationSource"], "GRAPH_SAGE_LOCAL")
+
+    def test_embed_cold_student_matches_equivalent_in_graph_node(self) -> None:
+        result = train_graphsage_embeddings(
+            prep=self.prep,
+            config=GraphSAGETrainConfig(epochs=10, seed=5),
+        )
+        reference_id = next(iter(self.dataset.students))
+        reference = self.dataset.students[reference_id]
+        clone = Student(
+            id="clone-student",
+            first_name="",
+            last_name="",
+            study_path=reference.study_path,
+            semester=reference.semester,
+            semester_bucket=semester_bucket_for(reference.semester),
+            preferred_topics=list(reference.preferred_topics),
+            joined_group_ids=[],
+        )
+        topic_weights = dict(self.hin.student_topic_weights.get(reference_id, {}))
+        max_semester = max(s.semester for s in self.dataset.students.values())
+        import numpy as np
+
+        inferred = np.asarray(
+            embed_cold_student(
+                result, self.prep, clone,
+                max_semester=max_semester, topic_weights=topic_weights,
+            )
+        )
+        self.assertEqual(len(inferred), result.config.embedding_dim)
+        self.assertTrue(np.all(np.isfinite(inferred)))
+        # A clone with identical attributes and interests, but without the
+        # reference's membership edges, must land close to the reference's
+        # embedding (not exactly: the reference also aggregates over its
+        # MEMBER_OF/SENDS neighbourhood).
+        trained = np.asarray(result.embeddings[reference_id])
+        cosine = float(
+            inferred @ trained / (np.linalg.norm(inferred) * np.linalg.norm(trained))
+        )
+        self.assertGreater(cosine, 0.5)
 
     def test_evaluation_returns_metrics(self) -> None:
         result = train_graphsage_embeddings(

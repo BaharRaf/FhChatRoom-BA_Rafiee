@@ -79,7 +79,23 @@ class SyntheticDataset:
     def source_student_id_for(self, student_id: str) -> str:
         return self.source_student_ids.get(student_id, student_id)
 
-    def to_dict(self) -> dict[str, Any]:
+    def _message_dict(self, message: "Message", redact_text: bool) -> dict[str, Any]:
+        if not redact_text:
+            return asdict(message)
+        # Privacy boundary: persisted artifacts must not contain raw message
+        # bodies. Bodies are reduced to the derived statistics the HIN needs
+        # (length, reaction count, day); topics are extracted into the
+        # aggregate HIN, never stored per message.
+        return {
+            "id": message.id,
+            "sender_id": message.sender_id,
+            "group_id": message.group_id,
+            "length": len(message.text.split()),
+            "day": message.day,
+            "reaction_count": message.reaction_count,
+        }
+
+    def to_dict(self, redact_message_text: bool = True) -> dict[str, Any]:
         return {
             "config": asdict(self.config),
             "generatedAt": self.generated_at,
@@ -87,10 +103,11 @@ class SyntheticDataset:
             "privacy": {
                 "studentIdentifiers": "pseudonymized" if self.source_student_ids else "internal",
                 "sourceIdentifierMappingIncluded": False,
+                "messageBodies": "redacted" if redact_message_text else "raw",
             },
             "students": {student_id: asdict(student) for student_id, student in self.students.items()},
             "groups": {group_id: asdict(group) for group_id, group in self.groups.items()},
-            "messages": [asdict(message) for message in self.messages],
+            "messages": [self._message_dict(message, redact_message_text) for message in self.messages],
         }
 
 

@@ -80,6 +80,20 @@ def _normalize_documents(payload: Any) -> list[dict[str, Any]]:
     raise ValueError("Expected a JSON list or object of documents.")
 
 
+def _coerce_bool(*values: Any) -> bool:
+    """True if any of the given Firestore field values is truthy.
+
+    Firestore exports may carry booleans as real booleans or as strings
+    ("true"/"True"); absent fields arrive as None.
+    """
+    for value in values:
+        if isinstance(value, bool) and value:
+            return True
+        if isinstance(value, str) and value.strip().lower() == "true":
+            return True
+    return False
+
+
 def _coerce_int(value: Any, default: int = 0) -> int:
     if value is None:
         return default
@@ -157,12 +171,28 @@ def dataset_from_firestore_json(
             joined_group_ids=[],
         )
 
+    # Privacy boundary: private rooms and direct messages must never enter
+    # the recommendation graph -- neither as recommendable items nor as
+    # membership or message evidence.
+    non_public_room_ids = {
+        str(room.get("id") or "").strip()
+        for room in rooms_payload
+        if _coerce_bool(room.get("isPrivate"), room.get("private"))
+        or _coerce_bool(room.get("isDirect"), room.get("direct"))
+    }
+
     for message_doc in messages_payload:
         room_id = str(message_doc.get("roomId") or message_doc.get("groupId") or "").strip()
+        if room_id in non_public_room_ids:
+            continue
         source_sender_id = str(message_doc.get("senderId") or message_doc.get("senderEmail") or "").strip()
         sender_id = student_id_mapper.internal_id_for(source_sender_id)
         message_id = str(message_doc.get("id") or "").strip()
-        text = str(message_doc.get("text") or "").strip()
+        # Data minimisation: the original message string never leaves the
+        # ingestion step. Only its lower-cased content tokens -- the exact
+        # input the TF-IDF topic extraction needs -- are retained and
+        # persisted in downstream artifacts.
+        text = " ".join(tokenize(str(message_doc.get("text") or "")))
 
         if not room_id or not sender_id or not message_id:
             continue
@@ -193,7 +223,7 @@ def dataset_from_firestore_json(
 
     for room in rooms_payload:
         group_id = str(room.get("id") or "").strip()
-        if not group_id:
+        if not group_id or group_id in non_public_room_ids:
             continue
 
         member_ids = [
