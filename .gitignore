@@ -44,8 +44,41 @@ proguard/
 # Optional: Node.js dependencies (if you use any)
 node_modules/
 
+# Firebase emulator artifacts (rules-unit tests / local runs)
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+database-debug.log
+storage-debug.log
+# package-lock.json IS tracked (reproducible rules-test dependencies);
+# only node_modules and emulator debug logs are ignored.
+
 # Python
 __pycache__/
 .pytest_cache/
 *.pyc
 recsys/output/
+
+# LaTeX intermediates (PDFs stay tracked as deliverables)
+docs/ba2/*.aux
+docs/ba2/*.out
+docs/ba2/*.toc
+docs/ba2/*.lof
+docs/ba2/*.lot
+docs/ba2/*.bbl
+docs/ba2/*.blg
+docs/ba2/defence/*.aux
+docs/ba2/defence/*.out
+docs/ba2/defence/*.toc
+docs/ba2/defence/*.nav
+docs/ba2/defence/*.snm
+docs/ba2/defence/*.log
+
+# Personal / third-party PDFs: kept LOCAL, never published to the public repo.
+# BA1 and the proposal are your prior work; the Informationsblatt is FH Campus
+# Wien's document and not ours to redistribute. Thesis source + built
+# thesis.pdf/presentation.pdf are still committed as deliverables.
+docs/BA2_Proposal_Bahareh_Rafiee.pdf
+docs/BA_Informationsblatt_CSDC26.pdf
+docs/Bachelorarbeit 1-CSDC26VZ-Rafiee-Bahareh.pdf
+docs/.DS_Store
