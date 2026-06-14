@@ -33,7 +33,7 @@ class MessageViewModel : ViewModel() {
 
     private val messageRepository: MessageRepository
     private val userRepository: UserRepository
-    private val storage = FirebaseStorage.getInstance()
+    private val storage: FirebaseStorage by lazy { FirebaseStorage.getInstance() }
     private val firestore = Injection.instance()
 
     init {
@@ -127,6 +127,10 @@ class MessageViewModel : ViewModel() {
     }
 
     fun sendPhotoMessage(uri: Uri, roomId: String) {
+        if (!com.example.fhchatroom.AppFeatures.MEDIA_UPLOADS_ENABLED) {
+            _sendResult.value = Error(IllegalStateException("Media uploads are disabled in this build."))
+            return
+        }
         viewModelScope.launch {
             try {
                 _uploadProgress.value = 0f
@@ -172,6 +176,10 @@ class MessageViewModel : ViewModel() {
     }
 
     fun sendCameraPhoto(bitmap: Bitmap, roomId: String) {
+        if (!com.example.fhchatroom.AppFeatures.MEDIA_UPLOADS_ENABLED) {
+            _sendResult.value = Error(IllegalStateException("Media uploads are disabled in this build."))
+            return
+        }
         viewModelScope.launch {
             try {
                 _uploadProgress.value = 0f
@@ -221,6 +229,10 @@ class MessageViewModel : ViewModel() {
     }
 
     fun sendVoiceMessage(audioFile: File, duration: Int, roomId: String) {
+        if (!com.example.fhchatroom.AppFeatures.MEDIA_UPLOADS_ENABLED) {
+            _sendResult.value = Error(IllegalStateException("Media uploads are disabled in this build."))
+            return
+        }
         viewModelScope.launch {
             try {
                 _uploadProgress.value = 0f

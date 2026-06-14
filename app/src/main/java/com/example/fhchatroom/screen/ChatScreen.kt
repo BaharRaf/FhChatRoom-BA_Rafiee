@@ -443,8 +443,10 @@ fun ChatScreen(
                     .padding(top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { showAttachmentDialog = true }) {
-                    Icon(imageVector = Icons.Default.AttachFile, contentDescription = "Attach")
+                if (com.example.fhchatroom.AppFeatures.MEDIA_UPLOADS_ENABLED) {
+                    IconButton(onClick = { showAttachmentDialog = true }) {
+                        Icon(imageVector = Icons.Default.AttachFile, contentDescription = "Attach")
+                    }
                 }
 
                 OutlinedTextField(
@@ -460,7 +462,7 @@ fun ChatScreen(
                         .padding(horizontal = 8.dp)
                 )
 
-                if (textState.value.isBlank()) {
+                if (textState.value.isBlank() && com.example.fhchatroom.AppFeatures.MEDIA_UPLOADS_ENABLED) {
                     IconButton(
                         onClick = {
                             if (ContextCompat.checkSelfPermission(

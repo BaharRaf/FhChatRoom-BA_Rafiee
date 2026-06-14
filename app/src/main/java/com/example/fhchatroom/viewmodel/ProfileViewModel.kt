@@ -27,7 +27,7 @@ class ProfileViewModel : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
     private val firestore = Injection.instance()
-    private val storage = FirebaseStorage.getInstance()
+    private val storage: FirebaseStorage by lazy { FirebaseStorage.getInstance() }
     private val academicRoomSeeder = AcademicRoomSeeder(firestore)
 
     private val _currentUser = MutableLiveData<User?>()
@@ -92,6 +92,10 @@ class ProfileViewModel : ViewModel() {
 
     // Upload photo from URI (for actual photo files if available)
     fun uploadProfilePhoto(uri: Uri, onComplete: (Boolean) -> Unit) {
+        if (!com.example.fhchatroom.AppFeatures.MEDIA_UPLOADS_ENABLED) {
+            onComplete(false)
+            return
+        }
         viewModelScope.launch {
             try {
                 val email = auth.currentUser?.email ?: return@launch
@@ -135,6 +139,10 @@ class ProfileViewModel : ViewModel() {
 
     // Upload photo from bitmap (camera)
     fun uploadProfilePhotoBitmap(bitmap: Bitmap, onComplete: (Boolean) -> Unit) {
+        if (!com.example.fhchatroom.AppFeatures.MEDIA_UPLOADS_ENABLED) {
+            onComplete(false)
+            return
+        }
         viewModelScope.launch {
             try {
                 val email = auth.currentUser?.email ?: return@launch
@@ -185,9 +193,12 @@ class ProfileViewModel : ViewModel() {
             try {
                 val email = auth.currentUser?.email ?: return@launch
 
-                // Delete photo from storage if it's from Firebase Storage
+                // Delete photo from storage if it's from Firebase Storage.
+                // Skipped when media is disabled (no Storage bucket / free plan);
+                // clearing the Firestore field below is enough.
                 _currentUser.value?.profilePhotoUrl?.let { url ->
-                    if (url.contains("firebasestorage.googleapis.com")) {
+                    if (com.example.fhchatroom.AppFeatures.MEDIA_UPLOADS_ENABLED
+                        && url.contains("firebasestorage.googleapis.com")) {
                         try {
                             storage.getReferenceFromUrl(url).delete().await()
                         } catch (e: Exception) {

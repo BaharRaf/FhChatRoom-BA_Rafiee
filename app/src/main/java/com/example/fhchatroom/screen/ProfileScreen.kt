@@ -255,7 +255,7 @@ fun ProfileScreen(
                             modifier = Modifier.size(120.dp),
                             strokeWidth = 4.dp
                         )
-                    } else {
+                    } else if (com.example.fhchatroom.AppFeatures.MEDIA_UPLOADS_ENABLED) {
                         Box(
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
@@ -445,7 +445,7 @@ fun ProfileScreen(
     }
 
     // Photo options dialog
-    if (showPhotoOptions) {
+    if (showPhotoOptions && com.example.fhchatroom.AppFeatures.MEDIA_UPLOADS_ENABLED) {
         AlertDialog(
             onDismissRequest = { showPhotoOptions = false },
             title = { Text("Change Profile Photo") },
