@@ -1,0 +1,19 @@
+{
+  "name": "fhchatroom-rules-tests",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Firestore + Storage security-rules unit tests (run against the local emulator).",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore,storage --project demo-fhchatroom --config ../firebase.json 'mocha rules.test.js --timeout 20000'"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "firebase": "^10.12.0",
+    "firebase-tools": "^13.35.1",
+    "mocha": "^10.4.0"
+  },
+  "comment": "uuid override works around an ERR_REQUIRE_ESM crash in firebase-tools' universal-analytics dep on Node 18.",
+  "overrides": {
+    "universal-analytics": { "uuid": "9.0.1" }
+  }
+}

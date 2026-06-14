@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// Firebase Storage rules for FhChatRoom. The app uploads to three prefixes:
+//   profile_photos/{uuid}.jpg  (ProfileViewModel)
+//   images/{uuid}.jpg          (chat photo messages, MessageViewModel)
+//   voice/{uuid}.3gp           (chat voice messages, MessageViewModel)
+// All are readable by signed-in users and writable by signed-in users with a
+// size and content-type guard. Everything else is denied.
+//
+// KNOWN LIMITATION (prototype): media is readable by any signed-in user, not
+// only members of the room the media belongs to. Filenames are unguessable
+// UUIDs and download URLs are stored only inside room/message documents that
+// are themselves membership-gated, so practical exposure is low. Strict
+// per-room access would require room-scoped paths (e.g. images/{roomId}/..)
+// plus a firestore.get() membership check here; note that Firebase
+// getDownloadUrl() tokens bypass Storage rules entirely once shared, so the
+// robust fix is short-lived signed URLs -- out of scope for the thesis demo.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /profile_photos/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+    match /images/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+    match /voice/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('audio/.*');
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

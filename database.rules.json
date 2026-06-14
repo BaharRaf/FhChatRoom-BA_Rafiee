@@ -1,0 +1,12 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "status": {
+      ".read": "auth != null",
+      "$emailKey": {
+        ".write": "auth != null"
+      }
+    }
+  }
+}

@@ -1,0 +1,158 @@
+rules_version = '2';
+
+// Firestore security rules for FhChatRoom (project fhchatroom-ba-rafiee-c58db).
+//
+// Versioned here so the access-control model is reproducible from code
+// (thesis privacy architecture). Deploy via the Firebase console
+// (Firestore -> Rules) or `firebase deploy --only firestore:rules`, and keep
+// console and repo in sync. Written from the app's access patterns
+// (collections: users, rooms + messages subcollection, friendRequests
+// [fromEmail/toEmail], friendships [user1/user2]).
+//
+// Model:
+//  * every access requires a signed-in user;
+//  * user documents: readable by signed-in users (member lists, friends),
+//    writable only by their owner -- and the recommendation fields are NOT
+//    client-writable: the offline pipeline writes them with owner/admin
+//    credentials, which bypass these rules (the trusted boundary);
+//  * public rooms: readable by all signed-in users; members may update;
+//    non-members may only add themselves (join). Private rooms and DMs:
+//    members only;
+//  * messages follow their room's visibility; only members post; authors
+//    edit/delete their own messages;
+//  * friend requests/friendships: only the involved parties.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userEmail() {
+      return request.auth.token.email;
+    }
+
+    // Only FH Campus Wien student accounts may provision data, mirroring the
+    // client-side sign-up domain check so a modified client cannot create
+    // records as a non-student account.
+    function isStudent() {
+      return signedIn() && userEmail().matches('.*@stud[.]hcw[.]ac[.]at');
+    }
+
+    function isRoomMember(room) {
+      return signedIn() && userEmail() in room.data.members;
+    }
+
+    function roomIsPublic(room) {
+      return !(room.data.get('isPrivate', false) == true
+               || room.data.get('private', false) == true
+               || room.data.get('isDirect', false) == true
+               || room.data.get('direct', false) == true);
+    }
+
+    // non-members may only append themselves to the member list
+    function isSelfJoin() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['members', 'updatedAt'])
+        && request.resource.data.members.hasAll(resource.data.members)
+        && request.resource.data.members.size() == resource.data.members.size() + 1
+        && userEmail() in request.resource.data.members;
+    }
+
+    // Academic/predefined rooms are system-owned, public template rooms that
+    // every relevant student deterministically (re)syncs via AcademicRoomSeeder
+    // (a merged write of the catalog-derived fields + arrayUnion(self)). Any
+    // signed-in user may create/merge them, but the write must keep them
+    // system-owned public template rooms (it cannot seize ownership, flip the
+    // room private, or drop the template flag).
+    function isTemplateRoomWrite() {
+      return request.resource.data.get('templateRoom', false) == true
+        && request.resource.data.get('ownerEmail', '') == 'system'
+        && roomIsPublic(request.resource);
+    }
+
+    // A non-owner room member may only touch this explicit allowlist of
+    // content/preview/membership fields -- never ownership, visibility, or any
+    // other metadata. (Owners get full control via a separate branch.) The set
+    // is exactly what the app writes as a member: join/leave (members),
+    // hide/unhide (hiddenBy), and the message preview fields.
+    function memberEditableRoomUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['members', 'hiddenBy', 'lastMessage', 'lastMessageSender',
+                         'lastMessageTimestamp', 'lastMessageType', 'updatedAt']);
+    }
+
+    match /users/{email} {
+      allow read: if signedIn();
+      allow create: if isStudent() && userEmail() == email;
+      // Owners may update their profile, but never the pipeline-owned
+      // recommendation fields.
+      allow update: if signedIn() && userEmail() == email
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(
+             ['recommendedRoomIds', 'recommendationsUpdatedAt', 'recommendationSource']);
+      allow delete: if false;
+    }
+
+    match /rooms/{roomId} {
+      allow read: if signedIn() && (roomIsPublic(resource) || isRoomMember(resource));
+      // A user may create a room they own; a 'system'-owned room may only be
+      // created if it is a valid public academic/template room (so a client
+      // cannot mint arbitrary system-owned rooms).
+      allow create: if signedIn()
+        && (request.resource.data.ownerEmail == userEmail()
+            || isTemplateRoomWrite());
+      allow update: if signedIn()
+        && (resource.data.ownerEmail == userEmail()              // owner: full control of their room
+            || (isRoomMember(resource) && memberEditableRoomUpdate())  // member: allowlisted fields only
+            || (roomIsPublic(resource) && isSelfJoin())          // non-member: join only
+            || (resource.data.get('templateRoom', false) == true && isTemplateRoomWrite())); // academic re-sync
+      allow delete: if signedIn() && resource.data.ownerEmail == userEmail();
+
+      match /messages/{messageId} {
+        allow read: if signedIn()
+          && (roomIsPublic(get(/databases/$(database)/documents/rooms/$(roomId)))
+              || isRoomMember(get(/databases/$(database)/documents/rooms/$(roomId))));
+        allow create: if signedIn()
+          && isRoomMember(get(/databases/$(database)/documents/rooms/$(roomId)))
+          && request.resource.data.senderId == userEmail();
+        // The author has full control of their own message; any room member
+        // may additionally react (reactions) or hide it for themselves
+        // (deletedFor) -- those are the only fields a non-author may touch.
+        allow update: if signedIn()
+          && (resource.data.senderId == userEmail()
+              || (isRoomMember(get(/databases/$(database)/documents/rooms/$(roomId)))
+                  && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['reactions', 'deletedFor'])));
+        allow delete: if signedIn()
+          && resource.data.senderId == userEmail();
+      }
+    }
+
+    match /friendRequests/{requestId} {
+      allow read: if signedIn()
+        && (resource.data.fromEmail == userEmail() || resource.data.toEmail == userEmail());
+      allow create: if signedIn() && request.resource.data.fromEmail == userEmail();
+      // recipient accepts/declines; sender may cancel
+      allow update, delete: if signedIn()
+        && (resource.data.fromEmail == userEmail() || resource.data.toEmail == userEmail());
+    }
+
+    match /friendships/{friendshipId} {
+      // KNOWN LIMITATION (prototype): a party may create a friendship doc
+      // involving themselves without a matching accepted request. Strict
+      // consent would require a firestore.get() into friendRequests, but the
+      // accept flow creates both friendship docs and deletes the request in
+      // one batch, which makes that check brittle; left as documented for the
+      // thesis demo. Reads/writes are still confined to the two parties.
+      allow read: if signedIn()
+        && (resource.data.user1 == userEmail() || resource.data.user2 == userEmail());
+      allow create: if signedIn()
+        && (request.resource.data.user1 == userEmail()
+            || request.resource.data.user2 == userEmail());
+      allow delete: if signedIn()
+        && (resource.data.user1 == userEmail() || resource.data.user2 == userEmail());
+      allow update: if false;
+    }
+  }
+}
