@@ -53,6 +53,7 @@ import com.example.fhchatroom.data.Room
 import com.example.fhchatroom.data.User
 import com.example.fhchatroom.data.studyPathCatalogKey
 import com.example.fhchatroom.data.toUserOrNull
+import com.example.fhchatroom.viewmodel.RecommendationViewModel
 import com.example.fhchatroom.viewmodel.RoomViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await
@@ -76,6 +77,7 @@ private enum class PublicRoomFilter { ALL, ACADEMIC, STUDENT }
 @Composable
 fun ChatRoomListScreen(
     roomViewModel: RoomViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    recommendationViewModel: RecommendationViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onJoinClicked: (Room) -> Unit,
     onLogout: () -> Unit,
     onNavigateToProfile: () -> Unit,
@@ -84,6 +86,7 @@ fun ChatRoomListScreen(
     onToggleTheme: () -> Unit
 ) {
     val rooms by roomViewModel.rooms.observeAsState(emptyList())
+    val recommendationState by recommendationViewModel.uiState.observeAsState()
     val currentAcademicUser by roomViewModel.currentAcademicUser.observeAsState()
     val academicRoomSyncError by roomViewModel.academicRoomSyncError.observeAsState()
     var showDialog by remember { mutableStateOf(false) }
@@ -251,6 +254,35 @@ fun ChatRoomListScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // AI recommendations (BA2): groups suggested by the offline GraphSAGE
+        // pipeline, surfaced from users/{email}.recommendedRoomIds.
+        val recommendedRooms = if (tab == RoomTab.PUBLIC && searchQuery.isEmpty()) {
+            val recommendedIds = recommendationState?.roomIds.orEmpty()
+            recommendedIds.mapNotNull { roomId ->
+                rooms.firstOrNull { room ->
+                    room.id == roomId &&
+                            !room.isDirect &&
+                            !room.isPrivate &&
+                            currentUserEmail != null &&
+                            !room.members.contains(currentUserEmail)
+                }
+            }.take(5)
+        } else {
+            emptyList()
+        }
+
+        if (recommendedRooms.isNotEmpty()) {
+            RecommendedRoomsSection(
+                rooms = recommendedRooms,
+                source = recommendationState?.source ?: "NONE",
+                onJoinClicked = { room ->
+                    roomViewModel.joinRoom(room.id)
+                    onJoinClicked(room)
+                }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
         // List
         val currentUser = currentUserEmail
         if (sortedRooms.isEmpty()) {
@@ -383,6 +415,86 @@ fun ChatRoomListScreen(
                     }
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun RecommendedRoomsSection(
+    rooms: List<Room>,
+    source: String,
+    onJoinClicked: (Room) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Recommended for you",
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = when (source) {
+                    "GRAPH_SAGE_LOCAL" -> "GraphSAGE"
+                    "LIGHT_GCN_LOCAL" -> "LightGCN"
+                    "CONTENT_BASED" -> "Content-based"
+                    else -> ""
+                },
+                fontSize = 11.sp,
+                color = Color.Gray
+            )
+        }
+
+        rooms.forEach { room ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = room.name,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (room.description.isNotEmpty()) {
+                            Text(
+                                text = room.description,
+                                fontSize = 12.sp,
+                                color = Color.Gray,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        Text(
+                            text = "${room.members.size} ${if (room.members.size == 1) "member" else "members"}",
+                            fontSize = 11.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                    OutlinedButton(onClick = { onJoinClicked(room) }) {
+                        Text("Join")
+                    }
+                }
+            }
         }
     }
 }

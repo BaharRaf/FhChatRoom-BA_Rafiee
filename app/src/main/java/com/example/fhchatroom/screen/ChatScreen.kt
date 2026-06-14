@@ -67,7 +67,11 @@ fun ChatScreen(
     onBack: () -> Unit = {}
 ) {
     val messages by messageViewModel.messages.observeAsState(emptyList())
-    messageViewModel.setRoomId(roomId)
+    // Bind to the room only when it changes, not on every recomposition, so we
+    // do not repeatedly restart the message collector.
+    LaunchedEffect(roomId) {
+        messageViewModel.setRoomId(roomId)
+    }
 
     val textState = remember { mutableStateOf("") }
     val sendResult by messageViewModel.sendResult.observeAsState()

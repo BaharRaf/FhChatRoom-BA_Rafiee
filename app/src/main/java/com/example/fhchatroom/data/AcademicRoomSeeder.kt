@@ -83,7 +83,8 @@ class AcademicRoomSeeder(
                 "academicRoomKind" to template.kind,
                 "lectureName" to template.lectureName,
                 "templateRoom" to true
-            )
+            ),
+            SetOptions.merge()
         ).await()
     }
 }

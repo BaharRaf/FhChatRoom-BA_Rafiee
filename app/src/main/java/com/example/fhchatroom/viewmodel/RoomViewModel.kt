@@ -35,16 +35,36 @@ class RoomViewModel : ViewModel() {
 
     private val firestore = Injection.instance()
     private var roomListener: ListenerRegistration? = null
+    private var academicProfileListener: ListenerRegistration? = null
     private val auth = FirebaseAuth.getInstance()
     private val academicRoomSeeder = AcademicRoomSeeder(firestore)
     private val authStateListener = FirebaseAuth.AuthStateListener {
         syncAcademicRoomsForCurrentUser()
+        observeAcademicProfile()
     }
 
     init {
         observeRoomsInRealTime()
         auth.addAuthStateListener(authStateListener)
         syncAcademicRoomsForCurrentUser()
+        observeAcademicProfile()
+    }
+
+    // Keeps the cached academic profile fresh so public-tab filtering reacts to
+    // study-path / semester changes without an app restart. Seeding stays tied
+    // to explicit sync / auth events, so this listener only refreshes the
+    // filter state, it does not re-run the seeder on every profile write.
+    private fun observeAcademicProfile() {
+        academicProfileListener?.remove()
+        academicProfileListener = null
+        val email = auth.currentUser?.email?.trim() ?: return
+        academicProfileListener = firestore.collection("users")
+            .document(email)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) return@addSnapshotListener
+                val user = snapshot?.toUserOrNull()?.withRepairedAcademicProfile() ?: return@addSnapshotListener
+                _currentAcademicUser.value = user
+            }
     }
 
     private fun observeRoomsInRealTime() {
@@ -82,6 +102,7 @@ class RoomViewModel : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         roomListener?.remove()
+        academicProfileListener?.remove()
         auth.removeAuthStateListener(authStateListener)
     }
 

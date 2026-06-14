@@ -59,21 +59,15 @@ fun ChatAppTopBar(
                 DropdownMenuItem(
                     text = { Text("Logout") },
                     onClick = {
-                        val email = FirebaseAuth.getInstance().currentUser?.email
+                        // Mark offline, then cleanup() to remove the auth/presence
+                        // listeners this instance registers in its constructor --
+                        // otherwise the logout path leaks a listener every time.
                         val onlineStatusUpdater = OnlineStatusUpdater()
-                        if (email != null) {
-                            // Just mark offline in RTDB and sign out
-                            onlineStatusUpdater.goOffline()
-                            FirebaseAuth.getInstance().signOut()
-                            menuExpanded.value = false
-                            onLogout()
-                        } else {
-                            // fallback
-                            onlineStatusUpdater.goOffline()
-                            FirebaseAuth.getInstance().signOut()
-                            menuExpanded.value = false
-                            onLogout()
-                        }
+                        onlineStatusUpdater.goOffline()
+                        onlineStatusUpdater.cleanup()
+                        FirebaseAuth.getInstance().signOut()
+                        menuExpanded.value = false
+                        onLogout()
                     }
                 )
             }

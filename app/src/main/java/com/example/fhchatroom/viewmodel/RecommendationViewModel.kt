@@ -23,12 +23,27 @@ class RecommendationViewModel : ViewModel() {
     private val _uiState = MutableLiveData(RecommendationUiState())
     val uiState: LiveData<RecommendationUiState> = _uiState
 
+    // Re-attach the Firestore listener whenever the signed-in user changes, so
+    // recommendations appear right after login/sign-up without an app restart
+    // (and are cleared on logout).
+    private val authListener = FirebaseAuth.AuthStateListener {
+        observeRecommendations()
+    }
+
     init {
+        auth.addAuthStateListener(authListener)
         observeRecommendations()
     }
 
     private fun observeRecommendations() {
-        val email = auth.currentUser?.email ?: return
+        listener?.remove()
+        listener = null
+
+        val email = auth.currentUser?.email
+        if (email == null) {
+            _uiState.value = RecommendationUiState()
+            return
+        }
 
         listener = firestore.collection("users")
             .document(email)
@@ -48,6 +63,7 @@ class RecommendationViewModel : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
+        auth.removeAuthStateListener(authListener)
         listener?.remove()
         listener = null
     }

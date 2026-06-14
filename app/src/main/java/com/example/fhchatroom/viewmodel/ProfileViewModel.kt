@@ -36,14 +36,23 @@ class ProfileViewModel : ViewModel() {
     private val _uploadProgress = MutableLiveData<Float>()
     val uploadProgress: LiveData<Float> = _uploadProgress
 
+    private var userListener: com.google.firebase.firestore.ListenerRegistration? = null
+
     init {
         loadCurrentUser()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        userListener?.remove()
+        userListener = null
     }
 
     private fun loadCurrentUser() {
         val email = auth.currentUser?.email ?: return
 
-        firestore.collection("users")
+        userListener?.remove()
+        userListener = firestore.collection("users")
             .document(email)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) return@addSnapshotListener

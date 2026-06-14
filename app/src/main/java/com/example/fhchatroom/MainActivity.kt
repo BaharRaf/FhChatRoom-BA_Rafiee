@@ -100,9 +100,10 @@ class MainActivity : ComponentActivity() {
                     if (email != null) {
                         when (event) {
                             Lifecycle.Event.ON_START -> {
-                                coroutineScope.launch {
-                                    onlineStatusUpdater = OnlineStatusUpdater()
-                                }
+                                // Reuse the single updater created in onCreate;
+                                // creating a new one here would leak its auth and
+                                // presence listeners.
+                                onlineStatusUpdater.goOnline()
                             }
                             Lifecycle.Event.ON_STOP -> {
                                 coroutineScope.launch(Dispatchers.IO) {

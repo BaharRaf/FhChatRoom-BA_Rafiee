@@ -83,6 +83,23 @@ class OnlineStatusUpdater {
             ?.addOnFailureListener { e -> Log.e(TAG, "Failed to set RTDB status offline for $email", e) }
     }
 
+    // Re-assert presence when the app returns to the foreground. Reuses the
+    // existing listeners instead of allocating a new updater (which would leak
+    // the previous auth/connection listeners).
+    fun goOnline() {
+        val email = auth.currentUser?.email
+        if (email == null) {
+            Log.d(TAG, "goOnline() called, but no user is signed in")
+            return
+        }
+        if (statusRef == null) {
+            setupPresence(email)
+        } else {
+            statusRef?.onDisconnect()?.setValue(false)
+            statusRef?.setValue(true)
+        }
+    }
+
     private fun tearDownPresence() {
         Log.d(TAG, "tearDownPresence() called")
         connectedListener?.let { listener ->

@@ -18,6 +18,7 @@ import com.example.fhchatroom.data.UserRepository
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.io.ByteArrayOutputStream
@@ -57,7 +58,15 @@ class MessageViewModel : ViewModel() {
     private val _uploadProgress = MutableLiveData<Float>()
     val uploadProgress: LiveData<Float> get() = _uploadProgress
 
+    // Tracks the active message-collection coroutine so switching rooms (or
+    // recomposition) cancels the previous collector instead of stacking new
+    // ones on top of it.
+    private var messageCollectionJob: Job? = null
+
     fun setRoomId(roomId: String) {
+        if (_roomId.value == roomId && messageCollectionJob?.isActive == true) {
+            return // already collecting this room; ignore duplicate calls
+        }
         _roomId.value = roomId
         if (_currentUser.value != null) {
             loadMessages()
@@ -218,7 +227,13 @@ class MessageViewModel : ViewModel() {
                 val fileName = "voice/${UUID.randomUUID()}.3gp"
                 val storageRef = storage.reference.child(fileName)
 
-                val uploadTask = storageRef.putFile(Uri.fromFile(audioFile))
+                // Set an explicit audio content type so it does not arrive as
+                // application/octet-stream or video/3gpp; the Storage rules
+                // guard the voice/ path on an audio/* content type.
+                val voiceMetadata = com.google.firebase.storage.storageMetadata {
+                    contentType = "audio/3gpp"
+                }
+                val uploadTask = storageRef.putFile(Uri.fromFile(audioFile), voiceMetadata)
 
                 uploadTask.addOnProgressListener { snapshot ->
                     val progress = (100.0 * snapshot.bytesTransferred / snapshot.totalByteCount).toFloat()
@@ -348,7 +363,9 @@ class MessageViewModel : ViewModel() {
     }
 
     fun loadMessages() {
-        viewModelScope.launch {
+        // Cancel any previous room's collector before starting a new one.
+        messageCollectionJob?.cancel()
+        messageCollectionJob = viewModelScope.launch {
             val room = _roomId.value ?: return@launch
             val userEmail = _currentUser.value?.email ?: return@launch
             messageRepository.getChatMessages(room, userEmail).collect { fetchedMessages ->
