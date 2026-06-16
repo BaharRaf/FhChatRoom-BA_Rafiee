@@ -22,27 +22,27 @@
   "hinSummary": {
     "nodeCounts": {
       "Student": 2000,
-      "Group": 100,
-      "Message": 1050,
-      "Topic": 49
+      "Group": 135,
+      "Message": 1173,
+      "Topic": 50
     },
     "edgeCounts": {
-      "MEMBER_OF": 2986,
-      "SENDS": 1050,
-      "POSTED_IN": 1050,
-      "CONTAINS": 1050,
-      "RELATED_TO": 955,
-      "INTERESTED_IN": 8926
+      "MEMBER_OF": 6986,
+      "SENDS": 1173,
+      "POSTED_IN": 1173,
+      "CONTAINS": 1173,
+      "RELATED_TO": 1276,
+      "INTERESTED_IN": 9880
     }
   },
   "trainingData": {
-    "positivePairs": 2986,
-    "trainingTriplets": 8958,
+    "positivePairs": 6986,
+    "trainingTriplets": 20958,
     "negativePairSources": {
-      "hard": 5972,
-      "random": 2986
+      "hard": 13972,
+      "random": 6986
     },
-    "featureDimension": 104
+    "featureDimension": 106
   },
   "modelMetrics": {
     "random": {
@@ -101,160 +101,160 @@
     },
     "content": {
       "all": {
-        "precisionAtK": 0.04085,
-        "recallAtK": 0.27575,
-        "ndcgAtK": 0.141766,
-        "hitRateAtK": 0.36,
-        "mrr": 0.116773,
+        "precisionAtK": 0.04025,
+        "recallAtK": 0.27075,
+        "ndcgAtK": 0.140479,
+        "hitRateAtK": 0.353,
+        "mrr": 0.118098,
         "evaluatedUsers": 2000
       },
       "warm": {
-        "precisionAtK": 0.028,
-        "recallAtK": 0.28,
-        "ndcgAtK": 0.133702,
-        "hitRateAtK": 0.28,
-        "mrr": 0.090019,
+        "precisionAtK": 0.027467,
+        "recallAtK": 0.274667,
+        "ndcgAtK": 0.131527,
+        "hitRateAtK": 0.274667,
+        "mrr": 0.088804,
         "evaluatedUsers": 1500
       },
       "cold": {
-        "precisionAtK": 0.0794,
-        "recallAtK": 0.263,
-        "ndcgAtK": 0.165957,
-        "hitRateAtK": 0.6,
-        "mrr": 0.197037,
+        "precisionAtK": 0.0786,
+        "recallAtK": 0.259,
+        "ndcgAtK": 0.167336,
+        "hitRateAtK": 0.588,
+        "mrr": 0.205981,
         "evaluatedUsers": 500
       },
-      "coldStartRobustnessNdcgAtK": 1.241241
+      "coldStartRobustnessNdcgAtK": 1.272258
     },
     "node2vec": {
       "all": {
-        "precisionAtK": 0.017,
-        "recallAtK": 0.122792,
-        "ndcgAtK": 0.061858,
-        "hitRateAtK": 0.165,
-        "mrr": 0.050563,
+        "precisionAtK": 0.03585,
+        "recallAtK": 0.249042,
+        "ndcgAtK": 0.121358,
+        "hitRateAtK": 0.325,
+        "mrr": 0.098672,
         "evaluatedUsers": 2000
       },
       "warm": {
-        "precisionAtK": 0.0132,
-        "recallAtK": 0.132,
-        "ndcgAtK": 0.06273,
-        "hitRateAtK": 0.132,
-        "mrr": 0.042039,
+        "precisionAtK": 0.025867,
+        "recallAtK": 0.258667,
+        "ndcgAtK": 0.11452,
+        "hitRateAtK": 0.258667,
+        "mrr": 0.071997,
         "evaluatedUsers": 1500
       },
       "cold": {
-        "precisionAtK": 0.0284,
-        "recallAtK": 0.095167,
-        "ndcgAtK": 0.059241,
-        "hitRateAtK": 0.264,
-        "mrr": 0.076136,
+        "precisionAtK": 0.0658,
+        "recallAtK": 0.220167,
+        "ndcgAtK": 0.141873,
+        "hitRateAtK": 0.524,
+        "mrr": 0.178698,
         "evaluatedUsers": 500
       },
-      "coldStartRobustnessNdcgAtK": 0.944379
+      "coldStartRobustnessNdcgAtK": 1.238852
     },
     "graphsage": {
       "all": {
-        "precisionAtK": 0.0337,
-        "recallAtK": 0.219583,
-        "ndcgAtK": 0.116883,
-        "hitRateAtK": 0.2965,
-        "mrr": 0.102131,
+        "precisionAtK": 0.03385,
+        "recallAtK": 0.227042,
+        "ndcgAtK": 0.118632,
+        "hitRateAtK": 0.3035,
+        "mrr": 0.102649,
         "evaluatedUsers": 2000
       },
       "warm": {
-        "precisionAtK": 0.0216,
-        "recallAtK": 0.216,
-        "ndcgAtK": 0.105521,
-        "hitRateAtK": 0.216,
-        "mrr": 0.072215,
+        "precisionAtK": 0.022933,
+        "recallAtK": 0.229333,
+        "ndcgAtK": 0.110149,
+        "hitRateAtK": 0.229333,
+        "mrr": 0.074805,
         "evaluatedUsers": 1500
       },
       "cold": {
-        "precisionAtK": 0.07,
-        "recallAtK": 0.230333,
-        "ndcgAtK": 0.150971,
-        "hitRateAtK": 0.538,
-        "mrr": 0.191879,
+        "precisionAtK": 0.0666,
+        "recallAtK": 0.220167,
+        "ndcgAtK": 0.144081,
+        "hitRateAtK": 0.526,
+        "mrr": 0.186183,
         "evaluatedUsers": 500
       },
-      "coldStartRobustnessNdcgAtK": 1.430726
+      "coldStartRobustnessNdcgAtK": 1.308055
     },
     "lightgcn": {
       "all": {
-        "precisionAtK": 0.01525,
-        "recallAtK": 0.102375,
-        "ndcgAtK": 0.049729,
-        "hitRateAtK": 0.145,
-        "mrr": 0.040982,
+        "precisionAtK": 0.0167,
+        "recallAtK": 0.110417,
+        "ndcgAtK": 0.056255,
+        "hitRateAtK": 0.1565,
+        "mrr": 0.048705,
         "evaluatedUsers": 2000
       },
       "warm": {
-        "precisionAtK": 0.010333,
-        "recallAtK": 0.103333,
-        "ndcgAtK": 0.045819,
-        "hitRateAtK": 0.103333,
-        "mrr": 0.028869,
+        "precisionAtK": 0.011067,
+        "recallAtK": 0.110667,
+        "ndcgAtK": 0.051217,
+        "hitRateAtK": 0.110667,
+        "mrr": 0.033571,
         "evaluatedUsers": 1500
       },
       "cold": {
-        "precisionAtK": 0.03,
-        "recallAtK": 0.0995,
-        "ndcgAtK": 0.061457,
-        "hitRateAtK": 0.27,
-        "mrr": 0.077323,
+        "precisionAtK": 0.0336,
+        "recallAtK": 0.109667,
+        "ndcgAtK": 0.071368,
+        "hitRateAtK": 0.294,
+        "mrr": 0.094109,
         "evaluatedUsers": 500
       },
-      "coldStartRobustnessNdcgAtK": 1.341286
+      "coldStartRobustnessNdcgAtK": 1.393439
     }
   },
   "hypothesisTests": {
     "H1_graphsage_vs_lightgcn_cold_ndcg": {
       "metric": "ndcg",
       "numUsers": 500,
-      "meanA": 0.150971,
-      "meanB": 0.061457,
-      "meanDifference": 0.089514,
+      "meanA": 0.144081,
+      "meanB": 0.071368,
+      "meanDifference": 0.072713,
       "alpha": 0.05,
       "numHypotheses": 2,
       "alphaBonferroniAdjusted": 0.025,
-      "tStatistic": 9.912036,
-      "tPValue": 2.9221076209435232e-21,
-      "wilcoxonStatistic": 9858.0,
-      "wilcoxonPValue": 2.563160504961684e-20,
-      "cohensD": 0.44328,
+      "tStatistic": 7.415053,
+      "tPValue": 5.253966445045448e-13,
+      "wilcoxonStatistic": 14513.0,
+      "wilcoxonPValue": 6.476182226861287e-13,
+      "cohensD": 0.331611,
       "significant": true
     },
     "H2_lightgcn_vs_graphsage_warm_recall": {
       "metric": "recall",
       "numUsers": 1500,
-      "meanA": 0.103333,
-      "meanB": 0.216,
-      "meanDifference": -0.112667,
+      "meanA": 0.110667,
+      "meanB": 0.229333,
+      "meanDifference": -0.118667,
       "alpha": 0.05,
       "numHypotheses": 2,
       "alphaBonferroniAdjusted": 0.025,
-      "tStatistic": -8.323667,
-      "tPValue": 1.8964172542454936e-16,
-      "wilcoxonStatistic": 28296.0,
-      "wilcoxonPValue": 3.938323947154821e-16,
-      "cohensD": -0.214916,
+      "tStatistic": -8.799919,
+      "tPValue": 3.692056621537208e-18,
+      "wilcoxonStatistic": 27153.0,
+      "wilcoxonPValue": 9.169196816138554e-18,
+      "cohensD": -0.227213,
       "significant": true
     },
     "supplementary_graphsage_vs_content_cold_ndcg": {
       "metric": "ndcg",
       "numUsers": 500,
-      "meanA": 0.150971,
-      "meanB": 0.165957,
-      "meanDifference": -0.014986,
+      "meanA": 0.144081,
+      "meanB": 0.167336,
+      "meanDifference": -0.023255,
       "alpha": 0.05,
       "numHypotheses": 2,
       "alphaBonferroniAdjusted": 0.025,
-      "tStatistic": -2.750214,
-      "tPValue": 0.006171895171862395,
-      "wilcoxonStatistic": 18919.0,
-      "wilcoxonPValue": 0.005469614953877142,
-      "cohensD": -0.122993,
+      "tStatistic": -4.015889,
+      "tPValue": 6.833569053210978e-05,
+      "wilcoxonStatistic": 14848.0,
+      "wilcoxonPValue": 7.164322523228316e-05,
+      "cohensD": -0.179596,
       "significant": true
     }
   },
@@ -264,32 +264,32 @@
       "cohorts": {
         "Applied Electronics": {
           "numUsers": 401,
-          "mean": 0.095087,
+          "mean": 0.124766,
           "median": 0.0
         },
         "Biomedical Science": {
           "numUsers": 406,
-          "mean": 0.124309,
+          "mean": 0.073957,
           "median": 0.0
         },
         "Computer Science and Digital Communications": {
           "numUsers": 383,
-          "mean": 0.123218,
+          "mean": 0.107702,
           "median": 0.0
         },
         "Health Care and Nursing": {
           "numUsers": 405,
-          "mean": 0.11821,
+          "mean": 0.134966,
           "median": 0.0
         },
         "Social Work": {
           "numUsers": 405,
-          "mean": 0.123702,
+          "mean": 0.151346,
           "median": 0.0
         }
       },
-      "hStatistic": 11.824065,
-      "pValue": 0.018708656232877457,
+      "hStatistic": 44.462746,
+      "pValue": 5.14176581635109e-09,
       "alpha": 0.05,
       "significantDisparity": true
     },
@@ -298,66 +298,66 @@
       "cohorts": {
         "Applied Electronics": {
           "numUsers": 98,
-          "mean": 0.12422,
-          "median": 0.0
+          "mean": 0.144328,
+          "median": 0.139056
         },
         "Biomedical Science": {
           "numUsers": 106,
-          "mean": 0.152348,
-          "median": 0.139056
+          "mean": 0.095455,
+          "median": 0.0
         },
         "Computer Science and Digital Communications": {
           "numUsers": 88,
-          "mean": 0.163461,
-          "median": 0.132889
+          "mean": 0.147224,
+          "median": 0.0
         },
         "Health Care and Nursing": {
           "numUsers": 101,
-          "mean": 0.158218,
-          "median": 0.15102
+          "mean": 0.15218,
+          "median": 0.139056
         },
         "Social Work": {
           "numUsers": 107,
-          "mean": 0.156995,
-          "median": 0.135652
+          "mean": 0.181795,
+          "median": 0.156426
         }
       },
-      "hStatistic": 4.743846,
-      "pValue": 0.3146042552253703,
+      "hStatistic": 16.831022,
+      "pValue": 0.002084653500020449,
       "alpha": 0.05,
-      "significantDisparity": false
+      "significantDisparity": true
     },
     "lightgcn_all": {
       "metric": "ndcg",
       "cohorts": {
         "Applied Electronics": {
           "numUsers": 401,
-          "mean": 0.048744,
+          "mean": 0.048717,
           "median": 0.0
         },
         "Biomedical Science": {
           "numUsers": 406,
-          "mean": 0.049335,
+          "mean": 0.051011,
           "median": 0.0
         },
         "Computer Science and Digital Communications": {
           "numUsers": 383,
-          "mean": 0.054716,
+          "mean": 0.051562,
           "median": 0.0
         },
         "Health Care and Nursing": {
           "numUsers": 405,
-          "mean": 0.04004,
+          "mean": 0.070392,
           "median": 0.0
         },
         "Social Work": {
           "numUsers": 405,
-          "mean": 0.056071,
+          "mean": 0.059276,
           "median": 0.0
         }
       },
-      "hStatistic": 1.656266,
-      "pValue": 0.7986456821178349,
+      "hStatistic": 2.666782,
+      "pValue": 0.6150397856426006,
       "alpha": 0.05,
       "significantDisparity": false
     }
@@ -365,27 +365,27 @@
   "beyondAccuracy": {
     "random": {
       "coverage": 1.0,
-      "diversity": 0.846804
+      "diversity": 0.841698
     },
     "popularity": {
       "coverage": 0.13,
-      "diversity": 0.86999
+      "diversity": 0.846308
     },
     "content": {
       "coverage": 1.0,
-      "diversity": 0.575466
+      "diversity": 0.550419
     },
     "node2vec": {
       "coverage": 1.0,
-      "diversity": 0.843123
+      "diversity": 0.648303
     },
     "graphsage": {
       "coverage": 1.0,
-      "diversity": 0.630692
+      "diversity": 0.596602
     },
     "lightgcn": {
       "coverage": 1.0,
-      "diversity": 0.851447
+      "diversity": 0.846852
     }
   },
   "dpSweep": [
@@ -415,32 +415,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0326,
-          "recallAtK": 0.21425,
-          "ndcgAtK": 0.114966,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.10083,
+          "precisionAtK": 0.03445,
+          "recallAtK": 0.233542,
+          "ndcgAtK": 0.12043,
+          "hitRateAtK": 0.31,
+          "mrr": 0.102765,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105411,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.07302,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111991,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.07408,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0666,
-          "recallAtK": 0.219,
-          "ndcgAtK": 0.143633,
-          "hitRateAtK": 0.536,
-          "mrr": 0.18426,
+          "precisionAtK": 0.0662,
+          "recallAtK": 0.218167,
+          "ndcgAtK": 0.145748,
+          "hitRateAtK": 0.524,
+          "mrr": 0.188821,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.362602
+        "coldStartRobustnessNdcgAtK": 1.301428
       },
-      "seconds": 7.6
+      "seconds": 10.3
     },
     {
       "epsilon": 0.25,
@@ -468,32 +468,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0326,
-          "recallAtK": 0.21425,
-          "ndcgAtK": 0.114966,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.10083,
+          "precisionAtK": 0.03445,
+          "recallAtK": 0.233542,
+          "ndcgAtK": 0.12043,
+          "hitRateAtK": 0.31,
+          "mrr": 0.102765,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105411,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.07302,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111991,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.07408,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0666,
-          "recallAtK": 0.219,
-          "ndcgAtK": 0.143633,
-          "hitRateAtK": 0.536,
-          "mrr": 0.18426,
+          "precisionAtK": 0.0662,
+          "recallAtK": 0.218167,
+          "ndcgAtK": 0.145745,
+          "hitRateAtK": 0.524,
+          "mrr": 0.188821,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.362602
+        "coldStartRobustnessNdcgAtK": 1.301404
       },
-      "seconds": 7.5
+      "seconds": 10.5
     },
     {
       "epsilon": 0.25,
@@ -509,32 +509,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.03265,
-          "recallAtK": 0.208417,
-          "ndcgAtK": 0.108689,
-          "hitRateAtK": 0.2825,
-          "mrr": 0.093537,
+          "precisionAtK": 0.03395,
+          "recallAtK": 0.227333,
+          "ndcgAtK": 0.118892,
+          "hitRateAtK": 0.306,
+          "mrr": 0.103429,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.020067,
-          "recallAtK": 0.200667,
-          "ndcgAtK": 0.093976,
-          "hitRateAtK": 0.200667,
-          "mrr": 0.062142,
+          "precisionAtK": 0.0228,
+          "recallAtK": 0.228,
+          "ndcgAtK": 0.108323,
+          "hitRateAtK": 0.228,
+          "mrr": 0.072707,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0704,
-          "recallAtK": 0.231667,
-          "ndcgAtK": 0.152826,
-          "hitRateAtK": 0.528,
-          "mrr": 0.187721,
+          "precisionAtK": 0.0674,
+          "recallAtK": 0.225333,
+          "ndcgAtK": 0.150602,
+          "hitRateAtK": 0.54,
+          "mrr": 0.195594,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.626219
+        "coldStartRobustnessNdcgAtK": 1.390306
       },
-      "seconds": 6.6
+      "seconds": 10.0
     },
     {
       "epsilon": 0.5,
@@ -562,32 +562,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0326,
-          "recallAtK": 0.21425,
-          "ndcgAtK": 0.114966,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.100825,
+          "precisionAtK": 0.03445,
+          "recallAtK": 0.233542,
+          "ndcgAtK": 0.12043,
+          "hitRateAtK": 0.31,
+          "mrr": 0.102765,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105411,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.07302,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111991,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.07408,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0666,
-          "recallAtK": 0.219,
-          "ndcgAtK": 0.143633,
-          "hitRateAtK": 0.536,
-          "mrr": 0.18424,
+          "precisionAtK": 0.0662,
+          "recallAtK": 0.218167,
+          "ndcgAtK": 0.145748,
+          "hitRateAtK": 0.524,
+          "mrr": 0.188821,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.3626
+        "coldStartRobustnessNdcgAtK": 1.301428
       },
-      "seconds": 8.5
+      "seconds": 10.3
     },
     {
       "epsilon": 0.5,
@@ -615,32 +615,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0326,
-          "recallAtK": 0.21425,
-          "ndcgAtK": 0.114966,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.10083,
+          "precisionAtK": 0.03445,
+          "recallAtK": 0.233542,
+          "ndcgAtK": 0.120427,
+          "hitRateAtK": 0.31,
+          "mrr": 0.102765,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105411,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.07302,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111991,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.07408,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0666,
-          "recallAtK": 0.219,
-          "ndcgAtK": 0.143633,
-          "hitRateAtK": 0.536,
-          "mrr": 0.18426,
+          "precisionAtK": 0.0662,
+          "recallAtK": 0.218167,
+          "ndcgAtK": 0.145734,
+          "hitRateAtK": 0.524,
+          "mrr": 0.188821,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.362602
+        "coldStartRobustnessNdcgAtK": 1.301303
       },
-      "seconds": 9.0
+      "seconds": 10.9
     },
     {
       "epsilon": 0.5,
@@ -656,32 +656,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0336,
-          "recallAtK": 0.215625,
-          "ndcgAtK": 0.110303,
-          "hitRateAtK": 0.292,
-          "mrr": 0.092791,
+          "precisionAtK": 0.0347,
+          "recallAtK": 0.229208,
+          "ndcgAtK": 0.120158,
+          "hitRateAtK": 0.311,
+          "mrr": 0.10418,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.0208,
-          "recallAtK": 0.208,
-          "ndcgAtK": 0.096363,
-          "hitRateAtK": 0.208,
-          "mrr": 0.063029,
+          "precisionAtK": 0.0226,
+          "recallAtK": 0.226,
+          "ndcgAtK": 0.108341,
+          "hitRateAtK": 0.226,
+          "mrr": 0.073229,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.072,
-          "recallAtK": 0.2385,
-          "ndcgAtK": 0.152126,
-          "hitRateAtK": 0.544,
-          "mrr": 0.182075,
+          "precisionAtK": 0.071,
+          "recallAtK": 0.238833,
+          "ndcgAtK": 0.155606,
+          "hitRateAtK": 0.566,
+          "mrr": 0.197033,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.57868
+        "coldStartRobustnessNdcgAtK": 1.436257
       },
-      "seconds": 7.3
+      "seconds": 10.1
     },
     {
       "epsilon": 1.0,
@@ -709,32 +709,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0326,
-          "recallAtK": 0.21425,
-          "ndcgAtK": 0.114972,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.100839,
+          "precisionAtK": 0.03445,
+          "recallAtK": 0.233542,
+          "ndcgAtK": 0.120396,
+          "hitRateAtK": 0.31,
+          "mrr": 0.102724,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105411,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.07302,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111945,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.074024,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0666,
-          "recallAtK": 0.219,
-          "ndcgAtK": 0.143656,
-          "hitRateAtK": 0.536,
-          "mrr": 0.184295,
+          "precisionAtK": 0.0662,
+          "recallAtK": 0.218167,
+          "ndcgAtK": 0.145748,
+          "hitRateAtK": 0.524,
+          "mrr": 0.188821,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.362814
+        "coldStartRobustnessNdcgAtK": 1.301965
       },
-      "seconds": 7.7
+      "seconds": 10.7
     },
     {
       "epsilon": 1.0,
@@ -762,32 +762,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0326,
-          "recallAtK": 0.21425,
-          "ndcgAtK": 0.114962,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.100818,
+          "precisionAtK": 0.03445,
+          "recallAtK": 0.233542,
+          "ndcgAtK": 0.12043,
+          "hitRateAtK": 0.31,
+          "mrr": 0.102765,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105411,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.07302,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111991,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.07408,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0666,
-          "recallAtK": 0.219,
-          "ndcgAtK": 0.143615,
-          "hitRateAtK": 0.536,
-          "mrr": 0.184212,
+          "precisionAtK": 0.0662,
+          "recallAtK": 0.218167,
+          "ndcgAtK": 0.145748,
+          "hitRateAtK": 0.524,
+          "mrr": 0.188821,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.362432
+        "coldStartRobustnessNdcgAtK": 1.301428
       },
-      "seconds": 7.4
+      "seconds": 10.9
     },
     {
       "epsilon": 1.0,
@@ -803,32 +803,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0341,
-          "recallAtK": 0.220667,
-          "ndcgAtK": 0.112668,
-          "hitRateAtK": 0.2995,
-          "mrr": 0.094816,
+          "precisionAtK": 0.03715,
+          "recallAtK": 0.243958,
+          "ndcgAtK": 0.128124,
+          "hitRateAtK": 0.3295,
+          "mrr": 0.110702,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021467,
-          "recallAtK": 0.214667,
-          "ndcgAtK": 0.098998,
-          "hitRateAtK": 0.214667,
-          "mrr": 0.064448,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.115322,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.078376,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.072,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.153676,
-          "hitRateAtK": 0.554,
-          "mrr": 0.185919,
+          "precisionAtK": 0.077,
+          "recallAtK": 0.259833,
+          "ndcgAtK": 0.166531,
+          "hitRateAtK": 0.602,
+          "mrr": 0.207679,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.552311
+        "coldStartRobustnessNdcgAtK": 1.44405
       },
-      "seconds": 6.5
+      "seconds": 10.2
     },
     {
       "epsilon": 3.0,
@@ -856,32 +856,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0326,
-          "recallAtK": 0.21425,
-          "ndcgAtK": 0.114908,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.100755,
+          "precisionAtK": 0.03445,
+          "recallAtK": 0.233542,
+          "ndcgAtK": 0.120396,
+          "hitRateAtK": 0.31,
+          "mrr": 0.102721,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105337,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.07293,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111956,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.074035,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0666,
-          "recallAtK": 0.219,
-          "ndcgAtK": 0.143622,
-          "hitRateAtK": 0.536,
-          "mrr": 0.184232,
+          "precisionAtK": 0.0662,
+          "recallAtK": 0.218167,
+          "ndcgAtK": 0.145715,
+          "hitRateAtK": 0.524,
+          "mrr": 0.188777,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.363461
+        "coldStartRobustnessNdcgAtK": 1.301536
       },
-      "seconds": 8.9
+      "seconds": 10.6
     },
     {
       "epsilon": 3.0,
@@ -909,32 +909,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0326,
-          "recallAtK": 0.21425,
-          "ndcgAtK": 0.114999,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.100871,
+          "precisionAtK": 0.03445,
+          "recallAtK": 0.233542,
+          "ndcgAtK": 0.120306,
+          "hitRateAtK": 0.31,
+          "mrr": 0.102593,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105446,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.073062,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111857,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.073913,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0666,
-          "recallAtK": 0.219,
-          "ndcgAtK": 0.143656,
-          "hitRateAtK": 0.536,
-          "mrr": 0.184295,
+          "precisionAtK": 0.0662,
+          "recallAtK": 0.218167,
+          "ndcgAtK": 0.145654,
+          "hitRateAtK": 0.524,
+          "mrr": 0.188633,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.362356
+        "coldStartRobustnessNdcgAtK": 1.302137
       },
-      "seconds": 10.7
+      "seconds": 11.9
     },
     {
       "epsilon": 3.0,
@@ -950,32 +950,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.03275,
-          "recallAtK": 0.214417,
-          "ndcgAtK": 0.114479,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.100412,
+          "precisionAtK": 0.03605,
+          "recallAtK": 0.2375,
+          "ndcgAtK": 0.121723,
+          "hitRateAtK": 0.32,
+          "mrr": 0.10197,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021133,
-          "recallAtK": 0.211333,
-          "ndcgAtK": 0.1032,
-          "hitRateAtK": 0.211333,
-          "mrr": 0.070608,
+          "precisionAtK": 0.023533,
+          "recallAtK": 0.235333,
+          "ndcgAtK": 0.110655,
+          "hitRateAtK": 0.235333,
+          "mrr": 0.073445,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0676,
-          "recallAtK": 0.223667,
-          "ndcgAtK": 0.148317,
-          "hitRateAtK": 0.54,
-          "mrr": 0.189826,
+          "precisionAtK": 0.0736,
+          "recallAtK": 0.244,
+          "ndcgAtK": 0.15493,
+          "hitRateAtK": 0.574,
+          "mrr": 0.187545,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.437181
+        "coldStartRobustnessNdcgAtK": 1.400121
       },
-      "seconds": 9.5
+      "seconds": 10.0
     },
     {
       "epsilon": 5.0,
@@ -1003,30 +1003,30 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0326,
-          "recallAtK": 0.21425,
-          "ndcgAtK": 0.114859,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.1007,
+          "precisionAtK": 0.03445,
+          "recallAtK": 0.233542,
+          "ndcgAtK": 0.120176,
+          "hitRateAtK": 0.31,
+          "mrr": 0.102411,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105265,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.072843,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111687,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.073677,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0666,
-          "recallAtK": 0.219,
-          "ndcgAtK": 0.14364,
-          "hitRateAtK": 0.536,
-          "mrr": 0.184271,
+          "precisionAtK": 0.0662,
+          "recallAtK": 0.218167,
+          "ndcgAtK": 0.145644,
+          "hitRateAtK": 0.524,
+          "mrr": 0.18861,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.364554
+        "coldStartRobustnessNdcgAtK": 1.304033
       },
       "seconds": 10.4
     },
@@ -1056,32 +1056,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0326,
-          "recallAtK": 0.21425,
-          "ndcgAtK": 0.115005,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.100873,
+          "precisionAtK": 0.03445,
+          "recallAtK": 0.233542,
+          "ndcgAtK": 0.120379,
+          "hitRateAtK": 0.31,
+          "mrr": 0.102683,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105458,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.073074,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111954,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.074034,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0666,
-          "recallAtK": 0.219,
-          "ndcgAtK": 0.143644,
-          "hitRateAtK": 0.536,
-          "mrr": 0.184267,
+          "precisionAtK": 0.0662,
+          "recallAtK": 0.218167,
+          "ndcgAtK": 0.145654,
+          "hitRateAtK": 0.524,
+          "mrr": 0.188633,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.362096
+        "coldStartRobustnessNdcgAtK": 1.30101
       },
-      "seconds": 10.5
+      "seconds": 10.4
     },
     {
       "epsilon": 5.0,
@@ -1097,32 +1097,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0332,
-          "recallAtK": 0.2215,
-          "ndcgAtK": 0.115887,
-          "hitRateAtK": 0.298,
-          "mrr": 0.099991,
+          "precisionAtK": 0.0347,
+          "recallAtK": 0.23375,
+          "ndcgAtK": 0.119236,
+          "hitRateAtK": 0.308,
+          "mrr": 0.098883,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.0222,
-          "recallAtK": 0.222,
-          "ndcgAtK": 0.106173,
-          "hitRateAtK": 0.222,
-          "mrr": 0.071318,
+          "precisionAtK": 0.023667,
+          "recallAtK": 0.236667,
+          "ndcgAtK": 0.11084,
+          "hitRateAtK": 0.236667,
+          "mrr": 0.073394,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0662,
-          "recallAtK": 0.22,
-          "ndcgAtK": 0.145031,
-          "hitRateAtK": 0.526,
-          "mrr": 0.186011,
+          "precisionAtK": 0.0678,
+          "recallAtK": 0.225,
+          "ndcgAtK": 0.144424,
+          "hitRateAtK": 0.522,
+          "mrr": 0.175351,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.365996
+        "coldStartRobustnessNdcgAtK": 1.302992
       },
-      "seconds": 7.7
+      "seconds": 9.8
     },
     {
       "epsilon": 8.0,
@@ -1150,32 +1150,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0326,
-          "recallAtK": 0.21425,
-          "ndcgAtK": 0.114646,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.100321,
+          "precisionAtK": 0.03445,
+          "recallAtK": 0.233542,
+          "ndcgAtK": 0.120136,
+          "hitRateAtK": 0.31,
+          "mrr": 0.102369,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105143,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.072677,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111626,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.073606,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0666,
-          "recallAtK": 0.219,
-          "ndcgAtK": 0.143156,
-          "hitRateAtK": 0.536,
-          "mrr": 0.183252,
+          "precisionAtK": 0.0662,
+          "recallAtK": 0.218167,
+          "ndcgAtK": 0.145665,
+          "hitRateAtK": 0.524,
+          "mrr": 0.18866,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.361533
+        "coldStartRobustnessNdcgAtK": 1.304937
       },
-      "seconds": 8.4
+      "seconds": 10.6
     },
     {
       "epsilon": 8.0,
@@ -1203,32 +1203,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0326,
-          "recallAtK": 0.21425,
-          "ndcgAtK": 0.114973,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.100843,
+          "precisionAtK": 0.0345,
+          "recallAtK": 0.233792,
+          "ndcgAtK": 0.12045,
+          "hitRateAtK": 0.3105,
+          "mrr": 0.102692,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105417,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.073025,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111954,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.074034,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0666,
-          "recallAtK": 0.219,
-          "ndcgAtK": 0.14364,
-          "hitRateAtK": 0.536,
-          "mrr": 0.184298,
+          "precisionAtK": 0.0664,
+          "recallAtK": 0.219167,
+          "ndcgAtK": 0.145937,
+          "hitRateAtK": 0.526,
+          "mrr": 0.188666,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.362584
+        "coldStartRobustnessNdcgAtK": 1.303543
       },
-      "seconds": 8.3
+      "seconds": 10.6
     },
     {
       "epsilon": 8.0,
@@ -1244,32 +1244,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.03285,
-          "recallAtK": 0.219875,
-          "ndcgAtK": 0.115854,
-          "hitRateAtK": 0.2965,
-          "mrr": 0.101771,
+          "precisionAtK": 0.0346,
+          "recallAtK": 0.230917,
+          "ndcgAtK": 0.115123,
+          "hitRateAtK": 0.306,
+          "mrr": 0.093536,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.022067,
-          "recallAtK": 0.220667,
-          "ndcgAtK": 0.10578,
-          "hitRateAtK": 0.220667,
-          "mrr": 0.071015,
+          "precisionAtK": 0.023133,
+          "recallAtK": 0.231333,
+          "ndcgAtK": 0.105302,
+          "hitRateAtK": 0.231333,
+          "mrr": 0.067418,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0652,
-          "recallAtK": 0.2175,
-          "ndcgAtK": 0.146078,
-          "hitRateAtK": 0.524,
-          "mrr": 0.194042,
+          "precisionAtK": 0.069,
+          "recallAtK": 0.229667,
+          "ndcgAtK": 0.144586,
+          "hitRateAtK": 0.53,
+          "mrr": 0.171888,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.380962
+        "coldStartRobustnessNdcgAtK": 1.373066
       },
-      "seconds": 8.2
+      "seconds": 10.0
     },
     {
       "epsilon": 10.0,
@@ -1297,32 +1297,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.03265,
-          "recallAtK": 0.214375,
-          "ndcgAtK": 0.114608,
-          "hitRateAtK": 0.294,
-          "mrr": 0.100251,
+          "precisionAtK": 0.0344,
+          "recallAtK": 0.233375,
+          "ndcgAtK": 0.12007,
+          "hitRateAtK": 0.31,
+          "mrr": 0.10237,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105027,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.072542,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111648,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.073637,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0668,
-          "recallAtK": 0.2195,
-          "ndcgAtK": 0.143352,
-          "hitRateAtK": 0.538,
-          "mrr": 0.183376,
+          "precisionAtK": 0.066,
+          "recallAtK": 0.2175,
+          "ndcgAtK": 0.145336,
+          "hitRateAtK": 0.524,
+          "mrr": 0.188571,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.364912
+        "coldStartRobustnessNdcgAtK": 1.301738
       },
-      "seconds": 8.5
+      "seconds": 10.6
     },
     {
       "epsilon": 10.0,
@@ -1350,32 +1350,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0326,
-          "recallAtK": 0.21425,
-          "ndcgAtK": 0.114966,
-          "hitRateAtK": 0.2935,
-          "mrr": 0.100837,
+          "precisionAtK": 0.0345,
+          "recallAtK": 0.233792,
+          "ndcgAtK": 0.120266,
+          "hitRateAtK": 0.3105,
+          "mrr": 0.102459,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105408,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.073016,
+          "precisionAtK": 0.023867,
+          "recallAtK": 0.238667,
+          "ndcgAtK": 0.111698,
+          "hitRateAtK": 0.238667,
+          "mrr": 0.07369,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0666,
-          "recallAtK": 0.219,
-          "ndcgAtK": 0.14364,
-          "hitRateAtK": 0.536,
-          "mrr": 0.184298,
+          "precisionAtK": 0.0664,
+          "recallAtK": 0.219167,
+          "ndcgAtK": 0.145971,
+          "hitRateAtK": 0.526,
+          "mrr": 0.188766,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.362708
+        "coldStartRobustnessNdcgAtK": 1.306841
       },
-      "seconds": 8.2
+      "seconds": 10.2
     },
     {
       "epsilon": 10.0,
@@ -1391,85 +1391,85 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.03255,
-          "recallAtK": 0.215,
-          "ndcgAtK": 0.115136,
-          "hitRateAtK": 0.2925,
-          "mrr": 0.101207,
+          "precisionAtK": 0.0341,
+          "recallAtK": 0.229042,
+          "ndcgAtK": 0.115541,
+          "hitRateAtK": 0.3035,
+          "mrr": 0.095775,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.021267,
-          "recallAtK": 0.212667,
-          "ndcgAtK": 0.105041,
-          "hitRateAtK": 0.212667,
-          "mrr": 0.07247,
+          "precisionAtK": 0.023067,
+          "recallAtK": 0.230667,
+          "ndcgAtK": 0.1058,
+          "hitRateAtK": 0.230667,
+          "mrr": 0.068144,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0664,
-          "recallAtK": 0.222,
-          "ndcgAtK": 0.14542,
-          "hitRateAtK": 0.532,
-          "mrr": 0.187417,
+          "precisionAtK": 0.0672,
+          "recallAtK": 0.224167,
+          "ndcgAtK": 0.144764,
+          "hitRateAtK": 0.522,
+          "mrr": 0.178667,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.384408
+        "coldStartRobustnessNdcgAtK": 1.36828
       },
-      "seconds": 7.2
+      "seconds": 9.8
     }
   ],
   "timingsSeconds": {
     "random": 0.0,
     "popularity": 0.0,
-    "content": 2.8,
-    "node2vec": 2.5,
-    "graphsage": 6.8,
-    "lightgcn": 1.4
+    "content": 3.8,
+    "node2vec": 5.8,
+    "graphsage": 10.2,
+    "lightgcn": 2.2
   },
   "graphsageLosses": [
-    0.6895813847180403,
-    0.6893672548065002,
-    0.6891535090919348,
-    0.6889401487632639,
-    0.6887271749638038,
-    0.6885145887916766,
-    0.6883023913002262,
-    0.6880905834984338,
-    0.6878791663513414,
-    0.6876681407804751,
-    0.6874575076642724,
-    0.6872472678385133,
-    0.6870374220967514,
-    0.6868279711907512,
-    0.6866189158309229,
-    0.6864102566867635,
-    0.6862019943872968,
-    0.6859941295215163,
-    0.6857866626388294,
-    0.685579594249502
+    0.6784015923030124,
+    0.6775212985808229,
+    0.6766483522869603,
+    0.6757824840498112,
+    0.6749234492356906,
+    0.6740710270222033,
+    0.6732250194761046,
+    0.6723852506345468,
+    0.6715515655888348,
+    0.6707238295700335,
+    0.6699019270360255,
+    0.66908576075984,
+    0.6682752509193234,
+    0.667470334188439,
+    0.666670962830711,
+    0.6658771037955318,
+    0.6650887378182406,
+    0.6643058585250629,
+    0.6635284715441431,
+    0.6627565936240519
   ],
   "lightgcnLosses": [
-    0.6560326936826909,
-    0.6560315246232601,
-    0.6560303555292945,
-    0.6560291864007933,
-    0.6560280172377554,
-    0.6560268480401802,
-    0.6560256788080662,
-    0.6560245095414128,
-    0.6560233402402186,
-    0.6560221709044831,
-    0.6560210015342051,
-    0.6560198321293836,
-    0.6560186626900175,
-    0.6560174932161061,
-    0.6560163237076483,
-    0.6560151541646432,
-    0.6560139845870894,
-    0.6560128149749864,
-    0.656011645328333,
-    0.6560104756471283
+    0.6785527663694438,
+    0.6785524232873618,
+    0.6785520801893732,
+    0.6785517370754773,
+    0.6785513939456733,
+    0.6785510507999603,
+    0.6785507076383372,
+    0.6785503644608034,
+    0.6785500212673579,
+    0.6785496780579996,
+    0.678549334832728,
+    0.6785489915915418,
+    0.6785486483344404,
+    0.6785483050614228,
+    0.6785479617724882,
+    0.6785476184676356,
+    0.6785472751468642,
+    0.6785469318101729,
+    0.6785465884575612,
+    0.6785462450890277
   ],
-  "totalSeconds": 188.9
+  "totalSeconds": 241.4
 }
