@@ -208,7 +208,10 @@ def generate_synthetic_dataset(config: DatasetConfig, seed: int = 42) -> Synthet
         group = rng.choices(available_groups, weights=group_message_weights, k=1)[0]
         sender_id = rng.choice(group.member_ids)
         student = students[sender_id]
-        usable_topics = list(set(student.preferred_topics) & set(group.topic_tags)) or group.topic_tags
+        # sorted(): set iteration order varies by process hash seed, so a plain
+        # list(set(...)) here would feed the seeded RNG a different order across
+        # runs and silently break reproducibility. Sorting makes it deterministic.
+        usable_topics = sorted(set(student.preferred_topics) & set(group.topic_tags)) or group.topic_tags
         topic = rng.choice(usable_topics)
         day = rng.randint(1, config.num_days)
         reaction_count = rng.choices([0, 1, 2, 3, 4], weights=[0.45, 0.25, 0.15, 0.1, 0.05], k=1)[0]

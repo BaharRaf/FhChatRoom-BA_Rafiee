@@ -324,7 +324,10 @@ def _build_training_pairs(
             ),
         )
 
-        for group_id in joined_group_ids:
+        # sorted(): joined_group_ids is a set, and iterating it in hash order
+        # would feed the seeded RNG (negative sampling below) a process-dependent
+        # order, breaking cross-run reproducibility. Sort for determinism.
+        for group_id in sorted(joined_group_ids):
             positive_pairs.append((student.id, group_id))
             sample_count = min(config.negative_samples_per_positive, len(negative_candidates))
             if sample_count == 0:
