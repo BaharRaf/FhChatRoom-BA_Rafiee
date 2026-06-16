@@ -17,6 +17,13 @@ private val studyPathAliases = mapOf(
     studyPathCatalogKey("computer science and digital communications") to "Computer Science and Digital Communications"
 )
 
+// Each student gets exactly two predefined academic rooms:
+//   1. a study-path room shared by ALL students of that study path
+//      (every semester), and
+//   2. a study-path + semester room shared by students of that path in the
+//      same semester.
+// Lecture-specific rooms were removed: they added clutter and depended on a
+// large, partly-inferred lecture catalogue.
 fun academicRoomTemplatesFor(studyPath: String, semester: Long): List<AcademicRoomTemplate> {
     if (semester !in 1L..12L) {
         return emptyList()
@@ -28,31 +35,27 @@ fun academicRoomTemplatesFor(studyPath: String, semester: Long): List<AcademicRo
     }
 
     val canonicalStudyPath = canonicalStudyPathFor(normalizedStudyPath)
-    val catalogKey = studyPathCatalogKey(canonicalStudyPath)
-    val lectureNames = lectureCatalogByStudyPath[catalogKey]?.get(semester).orEmpty()
-    val mainRoom = AcademicRoomTemplate(
-        id = academicRoomId(canonicalStudyPath, semester, "main"),
+    val studyPathRoom = AcademicRoomTemplate(
+        // semester-independent id so every semester's students share one room
+        id = "academic-${slugify(canonicalStudyPath)}",
+        name = "$canonicalStudyPath - All Students",
+        description = "Study-path group for all $canonicalStudyPath students across every semester.",
+        category = "Academic",
+        studyPath = canonicalStudyPath,
+        semester = 0L,
+        kind = "STUDY_PATH"
+    )
+    val semesterRoom = AcademicRoomTemplate(
+        id = "academic-${slugify(canonicalStudyPath)}-s$semester",
         name = "$canonicalStudyPath - Semester $semester",
-        description = "General semester group for $canonicalStudyPath students in semester $semester.",
+        description = "Semester group for $canonicalStudyPath students in semester $semester.",
         category = "Academic",
         studyPath = canonicalStudyPath,
         semester = semester,
-        kind = "MAIN"
+        kind = "SEMESTER"
     )
-    val lectureRooms = lectureNames.map { lectureName ->
-        AcademicRoomTemplate(
-            id = academicRoomId(canonicalStudyPath, semester, lectureName),
-            name = "$canonicalStudyPath S$semester - $lectureName",
-            description = "Lecture group for $lectureName in semester $semester of $canonicalStudyPath.",
-            category = "Lecture",
-            studyPath = canonicalStudyPath,
-            semester = semester,
-            kind = "LECTURE",
-            lectureName = lectureName
-        )
-    }
 
-    return listOf(mainRoom) + lectureRooms
+    return listOf(studyPathRoom, semesterRoom)
 }
 
 private fun canonicalStudyPathFor(studyPath: String): String {
@@ -67,10 +70,6 @@ internal fun studyPathCatalogKey(studyPath: String): String {
         .lowercase()
         .replace("[–—−]".toRegex(), "-")
         .replace("\\s*-\\s*".toRegex(), " - ")
-}
-
-private fun academicRoomId(studyPath: String, semester: Long, roomName: String): String {
-    return "academic-${slugify(studyPath)}-s$semester-${slugify(roomName)}"
 }
 
 private fun slugify(value: String): String {

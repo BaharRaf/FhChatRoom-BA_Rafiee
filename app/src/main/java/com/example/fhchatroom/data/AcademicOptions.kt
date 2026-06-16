@@ -67,16 +67,17 @@ val studyPathOptions = listOf(
 
 val semesterOptions = (1L..12L).toList()
 
+// FH Campus Wien bachelor programmes run six semesters (180 ECTS) -- verified
+// for Computer Science and Digital Communications. We offer 1..6 for any valid
+// study path rather than maintaining a per-programme catalogue.
+private val BACHELOR_SEMESTERS = (1L..6L).toList()
+
 fun semesterOptionsForStudyPath(studyPath: String): List<Long> {
     val normalizedStudyPath = normalizeStudyPath(studyPath)
     if (normalizedStudyPath.isBlank()) {
         return emptyList()
     }
-
-    return lectureCatalogByStudyPath[studyPathCatalogKey(normalizedStudyPath)]
-        ?.keys
-        ?.sorted()
-        .orEmpty()
+    return BACHELOR_SEMESTERS
 }
 
 data class AcademicProfileRepair(

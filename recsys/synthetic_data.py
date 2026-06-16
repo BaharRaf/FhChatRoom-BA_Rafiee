@@ -169,23 +169,46 @@ def generate_synthetic_dataset(config: DatasetConfig, seed: int = 42) -> Synthet
     # (is_student_made=False); they stay in the graph as context -- they connect
     # co-enrolled peers and carry topical signal, which is what lets the system
     # recommend student-made groups to an otherwise-cold new student.
+    # Each student is auto-enrolled in exactly two academic scaffolding rooms,
+    # mirroring the app's academic-room sync: (1) a study-path room shared by
+    # all students of that study path across every semester, and (2) a
+    # study-path + semester room. Neither is a recommendation target.
+    students_by_path: dict[str, list[str]] = defaultdict(list)
     students_by_cohort: dict[tuple[str, int], list[str]] = defaultdict(list)
     for student in students.values():
+        students_by_path[student.study_path].append(student.id)
         students_by_cohort[(student.study_path, student.semester)].append(student.id)
+
+    for path, path_member_ids in sorted(students_by_path.items()):
+        if not path_member_ids:
+            continue
+        path_index = study_paths.index(path)
+        academic_id = f"academic-p{path_index}"
+        groups[academic_id] = StudyGroup(
+            id=academic_id,
+            name=f"{path} - All Students",
+            category="Academic",
+            description=f"Study-path room for all {path} students.",
+            primary_study_path=path,
+            topic_tags=list(STUDY_PATH_TOPICS[path][:3]),
+            member_ids=list(path_member_ids),
+            is_student_made=False,
+        )
+        for student_id in path_member_ids:
+            students[student_id].joined_group_ids.append(academic_id)
 
     for (path, semester), cohort_member_ids in sorted(students_by_cohort.items()):
         if not cohort_member_ids:
             continue
         path_index = study_paths.index(path)
         academic_id = f"academic-p{path_index}-s{semester}"
-        topic_tags = STUDY_PATH_TOPICS[path][:3]
         groups[academic_id] = StudyGroup(
             id=academic_id,
             name=f"{path} - Semester {semester}",
             category="Academic",
-            description=f"Official semester {semester} room for {path}.",
+            description=f"Semester {semester} room for {path}.",
             primary_study_path=path,
-            topic_tags=list(topic_tags),
+            topic_tags=list(STUDY_PATH_TOPICS[path][:3]),
             member_ids=list(cohort_member_ids),
             is_student_made=False,
         )

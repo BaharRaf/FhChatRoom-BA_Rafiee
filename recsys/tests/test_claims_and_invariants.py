@@ -158,12 +158,13 @@ def test_generator_models_both_room_types_and_split_keeps_academic_as_context(da
     student_made = [g for g in dataset.groups.values() if g.is_student_made]
     assert academic, "generator must produce academic scaffolding rooms"
     assert student_made, "generator must produce student-made groups"
-    # every student is auto-enrolled in exactly one academic (cohort) room
+    # every student is auto-enrolled in exactly two academic rooms:
+    # a study-path room and a study-path + semester room
     for student in dataset.students.values():
         academic_joins = [
             gid for gid in student.joined_group_ids if not dataset.groups[gid].is_student_made
         ]
-        assert len(academic_joins) == 1
+        assert len(academic_joins) == 2
 
     train, held_out, warm_ids, cold_ids = build_temporal_onboarding_targets(
         dataset=deepcopy(dataset), cold_start_ratio=0.25, seed=11
