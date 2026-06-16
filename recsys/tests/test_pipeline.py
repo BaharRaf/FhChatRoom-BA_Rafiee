@@ -25,7 +25,11 @@ class RecsysPipelineTest(unittest.TestCase):
 
     def test_synthetic_dataset_has_expected_size(self) -> None:
         self.assertEqual(len(self.dataset.students), 20)
-        self.assertEqual(len(self.dataset.groups), 8)
+        # 8 student-made groups + academic scaffolding rooms (one per
+        # study-path/semester cohort that has students).
+        student_made = [g for g in self.dataset.groups.values() if g.is_student_made]
+        self.assertEqual(len(student_made), 8)
+        self.assertGreater(len(self.dataset.groups), 8)
         self.assertEqual(len(self.dataset.messages), 80)
         self.assertTrue(all(student.joined_group_ids for student in self.dataset.students.values()))
 

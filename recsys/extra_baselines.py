@@ -26,7 +26,8 @@ def build_random_recommendations(
 ) -> dict[str, list[str]]:
     """Uniform-random ranking over non-joined groups (lower bound)."""
     rng = random.Random(seed)
-    group_ids = sorted(dataset.groups)
+    # Only student-made groups are recommendable; academic rooms are scaffolding.
+    group_ids = sorted(gid for gid, group in dataset.groups.items() if group.is_student_made)
     ranked: dict[str, list[str]] = {}
     for student_id, student in dataset.students.items():
         joined = set(student.joined_group_ids)
@@ -42,7 +43,7 @@ def build_popularity_recommendations(
 ) -> dict[str, list[str]]:
     """Most-members-first ranking, identical for every student."""
     by_popularity = sorted(
-        dataset.groups.values(),
+        (group for group in dataset.groups.values() if group.is_student_made),
         key=lambda group: (-len(group.member_ids), group.id),
     )
     ranked: dict[str, list[str]] = {}
@@ -205,8 +206,8 @@ def build_node2vec_recommendations(
 
         joined = set(student.joined_group_ids)
         scored: list[tuple[float, str]] = []
-        for group_id in dataset.groups:
-            if group_id in joined:
+        for group_id, group in dataset.groups.items():
+            if group_id in joined or not group.is_student_made:
                 continue
             group_embedding = np.asarray(
                 training_result.node_embeddings.get(group_id, []), dtype=np.float64

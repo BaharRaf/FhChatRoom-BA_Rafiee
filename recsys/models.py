@@ -43,6 +43,12 @@ class StudyGroup:
     primary_study_path: str
     topic_tags: list[str]
     member_ids: list[str] = field(default_factory=list)
+    # Origin of the group. Student-made (organic, peer-led) groups are the
+    # recommendation target; academic/template rooms (auto-assigned by study
+    # path and semester) are scaffolding that stays in the graph as context
+    # but is never itself recommended. Defaults to True so plain synthetic
+    # groups and minimal fixtures are treated as recommendable.
+    is_student_made: bool = True
 
 
 @dataclass

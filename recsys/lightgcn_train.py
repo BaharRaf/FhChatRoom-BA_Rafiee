@@ -275,7 +275,7 @@ def build_lightgcn_recommendations(
         ranked: list[dict[str, object]] = []
 
         for group_id, group in dataset.groups.items():
-            if group_id in joined_group_ids:
+            if group_id in joined_group_ids or not group.is_student_made:
                 continue
 
             popularity = _popularity(dataset, group_id)

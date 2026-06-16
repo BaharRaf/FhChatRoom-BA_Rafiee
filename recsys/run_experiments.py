@@ -287,7 +287,11 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     }
 
     group_vectors = _group_topic_vectors(hin)
-    all_group_ids = sorted(train_dataset.groups)
+    # Coverage is measured over the recommendable catalogue (student-made
+    # groups); academic scaffolding rooms are never recommended.
+    all_group_ids = sorted(
+        group_id for group_id, group in train_dataset.groups.items() if group.is_student_made
+    )
     beyond_accuracy = {
         model: {
             "coverage": round(catalogue_coverage(ranked, all_group_ids, k=args.top_k), 6),

@@ -152,9 +152,17 @@ def build_temporal_onboarding_targets(
     held_out_pairs: set[tuple[str, str]] = set()
     warm_student_ids: list[str] = []
 
+    # Only student-made group memberships are recommendation targets. Academic
+    # rooms are auto-assigned scaffolding: they are never held out and remain in
+    # the graph as context (a cold student keeps their academic-room membership,
+    # which is exactly the structural signal the recommender exploits).
+    def is_student_made(group_id: str) -> bool:
+        group = dataset.groups.get(group_id)
+        return group is None or group.is_student_made
+
     for student_id in cold_student_ids:
         student = dataset.students[student_id]
-        hidden_group_ids = list(student.joined_group_ids)
+        hidden_group_ids = [gid for gid in student.joined_group_ids if is_student_made(gid)]
         if not hidden_group_ids:
             continue
         held_out_group_ids[student_id] = hidden_group_ids
@@ -162,15 +170,20 @@ def build_temporal_onboarding_targets(
             held_out_pairs.add((student_id, group_id))
             if group_id in dataset.groups and student_id in dataset.groups[group_id].member_ids:
                 dataset.groups[group_id].member_ids.remove(student_id)
-        student.joined_group_ids = []
+        # keep academic (scaffolding) memberships as training-time context
+        student.joined_group_ids = [
+            gid for gid in student.joined_group_ids if not is_student_made(gid)
+        ]
 
     for student_id in student_ids:
         if student_id in cold_student_id_set:
             continue
         student = dataset.students[student_id]
-        if len(student.joined_group_ids) <= 1:
+        student_made_joined = [gid for gid in student.joined_group_ids if is_student_made(gid)]
+        if len(student_made_joined) < 1:
             continue
-        held_out_group_id = student.joined_group_ids.pop()
+        held_out_group_id = student_made_joined[-1]
+        student.joined_group_ids.remove(held_out_group_id)
         held_out_group_ids[student_id] = [held_out_group_id]
         held_out_pairs.add((student_id, held_out_group_id))
         warm_student_ids.append(student_id)

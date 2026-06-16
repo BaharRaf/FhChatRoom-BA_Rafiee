@@ -455,7 +455,8 @@ def build_graphsage_recommendations(
         ranked: list[Recommendation] = []
 
         for group_id, group in dataset.groups.items():
-            if group_id in joined_group_ids:
+            # Recommend only student-made groups; academic rooms are scaffolding.
+            if group_id in joined_group_ids or not group.is_student_made:
                 continue
             group_embedding = np.asarray(training_result.embeddings.get(group_id, []), dtype=np.float64)
             if group_embedding.size == 0:

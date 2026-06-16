@@ -70,15 +70,23 @@ def test_node2vec_produces_embeddings_and_recommendations():
     assert set(ranked) == set(dataset.students)
 
 
-def test_node2vec_cold_student_falls_back_to_popularity():
+def test_node2vec_cold_students_get_valid_student_made_recommendations():
+    # Cold students now retain their academic-room membership as context, so
+    # they appear in random walks and receive real embeddings (rather than
+    # always falling back to popularity). The invariant that must hold is that
+    # every cold student still gets valid, student-made recommendations.
     dataset = _small_dataset()
     train_dataset, _, _, cold_ids = build_temporal_onboarding_targets(dataset, seed=3)
     result = train_node2vec_embeddings(train_dataset, Node2VecConfig(walks_per_node=2, walk_length=6))
     ranked = build_node2vec_recommendations(train_dataset, result, top_k=5)
-    popularity = build_popularity_recommendations(train_dataset, top_k=5)
     assert cold_ids
     for student_id in cold_ids:
-        assert ranked[student_id] == popularity[student_id]
+        recs = ranked[student_id]
+        assert len(recs) <= 5
+        joined = set(train_dataset.students[student_id].joined_group_ids)
+        for group_id in recs:
+            assert group_id not in joined
+            assert train_dataset.groups[group_id].is_student_made
 
 
 def test_dp_sigma_decreases_with_epsilon():

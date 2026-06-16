@@ -151,9 +151,51 @@ def test_persisted_snapshot_contains_no_raw_message_text(tmp_path):
     assert "secret" in json.dumps(ds.to_dict(redact_message_text=False)).lower()
 
 
+def test_generator_models_both_room_types_and_split_keeps_academic_as_context(dataset):
+    from copy import deepcopy
+
+    academic = [g for g in dataset.groups.values() if not g.is_student_made]
+    student_made = [g for g in dataset.groups.values() if g.is_student_made]
+    assert academic, "generator must produce academic scaffolding rooms"
+    assert student_made, "generator must produce student-made groups"
+    # every student is auto-enrolled in exactly one academic (cohort) room
+    for student in dataset.students.values():
+        academic_joins = [
+            gid for gid in student.joined_group_ids if not dataset.groups[gid].is_student_made
+        ]
+        assert len(academic_joins) == 1
+
+    train, held_out, warm_ids, cold_ids = build_temporal_onboarding_targets(
+        dataset=deepcopy(dataset), cold_start_ratio=0.25, seed=11
+    )
+    # held-out targets are exclusively student-made groups
+    for targets in held_out.values():
+        assert all(train.groups[gid].is_student_made for gid in targets)
+    # cold users keep their academic-room membership as context (not held out)
+    for student_id in cold_ids:
+        academic_joins = [
+            gid for gid in train.students[student_id].joined_group_ids
+            if not train.groups[gid].is_student_made
+        ]
+        assert academic_joins, "cold student should keep academic-room context"
+
+
 # ---------------------------------------------------------------------------
 # A. Adapter privacy boundaries
 # ---------------------------------------------------------------------------
+
+
+def test_adapter_flags_academic_rooms_as_not_student_made(tmp_path):
+    paths = _firestore_fixture(
+        tmp_path,
+        rooms_extra=[
+            {"id": "room_academic", "name": "CS - Semester 3", "members": ["bob@stud.hcw.ac.at"],
+             "templateRoom": True, "ownerEmail": "system", "academicRoomKind": "main"},
+        ],
+    )
+    ds = dataset_from_firestore_json(paths["users"], paths["rooms"], paths["messages"])
+    assert ds.groups["room_academic"].is_student_made is False
+    assert ds.groups["room_public"].is_student_made is True
 
 def test_private_and_direct_rooms_never_enter_the_graph(tmp_path):
     paths = _firestore_fixture(
@@ -229,6 +271,11 @@ def _assert_invariants(dataset, ranked_ids: dict[str, list[str]], k: int):
         assert len(group_ids) <= k
         assert len(group_ids) == len(set(group_ids)), "duplicate recommendation"
         assert all(group_id in dataset.groups for group_id in group_ids)
+        # Only student-made groups are recommendable; academic rooms are
+        # scaffolding and must never be recommended by any model.
+        assert all(
+            dataset.groups[group_id].is_student_made for group_id in group_ids
+        ), f"academic room recommended for {student_id}"
 
 
 def test_all_models_satisfy_output_invariants(dataset, trained):
@@ -378,7 +425,10 @@ def test_split_removes_all_held_out_evidence(dataset):
     for message in train.messages:
         assert message.sender_id not in cold_set
     for student_id in cold_ids:
-        assert train.students[student_id].joined_group_ids == []
+        # All student-made memberships are stripped; only academic-room
+        # scaffolding context remains.
+        remaining = train.students[student_id].joined_group_ids
+        assert all(not train.groups[gid].is_student_made for gid in remaining)
 
 
 def test_split_is_deterministic_and_seed_sensitive(dataset):

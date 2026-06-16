@@ -263,6 +263,11 @@ fun ChatRoomListScreen(
                     room.id == roomId &&
                             !room.isDirect &&
                             !room.isPrivate &&
+                            // Recommend only student-made groups; academic
+                            // template rooms are auto-assigned scaffolding, not
+                            // discoveries (defense-in-depth with the pipeline).
+                            !room.templateRoom &&
+                            room.academicRoomKind.isBlank() &&
                             currentUserEmail != null &&
                             !room.members.contains(currentUserEmail)
                 }

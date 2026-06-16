@@ -87,7 +87,7 @@ def recommend_groups_for_student(
     recommendations: list[Recommendation] = []
 
     for group_id, group in dataset.groups.items():
-        if group_id in joined_group_ids:
+        if group_id in joined_group_ids or not group.is_student_made:
             continue
 
         topic_similarity = _cosine_similarity(

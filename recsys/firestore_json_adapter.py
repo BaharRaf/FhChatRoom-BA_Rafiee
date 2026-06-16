@@ -237,6 +237,15 @@ def dataset_from_firestore_json(
         if not topic_tags:
             topic_tags = _infer_room_topic_tags(category, description, room_message_texts.get(group_id, []))
 
+        # Academic/template rooms (auto-assigned by study path and semester)
+        # are scaffolding, not recommendation targets. Detect them from any of
+        # the markers the app writes; everything else is a student-made group.
+        is_academic = (
+            _coerce_bool(room.get("templateRoom"))
+            or str(room.get("ownerEmail") or "").strip().lower() == "system"
+            or bool(str(room.get("academicRoomKind") or "").strip())
+        )
+
         groups[group_id] = StudyGroup(
             id=group_id,
             name=str(room.get("name") or group_id).strip(),
@@ -245,6 +254,7 @@ def dataset_from_firestore_json(
             primary_study_path=str(room.get("primaryStudyPath") or "").strip(),
             topic_tags=topic_tags[:3],
             member_ids=member_ids,
+            is_student_made=not is_academic,
         )
 
         for member_id in member_ids:

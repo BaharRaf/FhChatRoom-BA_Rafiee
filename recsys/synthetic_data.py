@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import random
+from collections import defaultdict
 
 from recsys.models import DatasetConfig
 from recsys.models import Message
@@ -88,6 +89,9 @@ def generate_synthetic_dataset(config: DatasetConfig, seed: int = 42) -> Synthet
     groups: dict[str, StudyGroup] = {}
     shuffled_group_ids: list[str] = []
 
+    # Student-made groups: the organic, peer-led study groups that the system
+    # is meant to discover and recommend (is_student_made=True). config.num_groups
+    # counts these; the academic scaffolding rooms below are added on top.
     for index in range(1, config.num_groups + 1):
         group_id = f"group-{index:03d}"
         primary_study_path = rng.choice(study_paths)
@@ -102,6 +106,7 @@ def generate_synthetic_dataset(config: DatasetConfig, seed: int = 42) -> Synthet
             description=_make_group_description(primary_study_path, topic_tags),
             primary_study_path=primary_study_path,
             topic_tags=topic_tags,
+            is_student_made=True,
         )
         shuffled_group_ids.append(group_id)
 
@@ -158,11 +163,44 @@ def generate_synthetic_dataset(config: DatasetConfig, seed: int = 42) -> Synthet
         for group_id in chosen_group_ids:
             groups[group_id].member_ids.append(student_id)
 
+    # Academic scaffolding rooms: one per (study path, semester) cohort that has
+    # students. Every student in the cohort is auto-enrolled, exactly like the
+    # app's academic-room sync. These rooms are NOT recommendation targets
+    # (is_student_made=False); they stay in the graph as context -- they connect
+    # co-enrolled peers and carry topical signal, which is what lets the system
+    # recommend student-made groups to an otherwise-cold new student.
+    students_by_cohort: dict[tuple[str, int], list[str]] = defaultdict(list)
+    for student in students.values():
+        students_by_cohort[(student.study_path, student.semester)].append(student.id)
+
+    for (path, semester), cohort_member_ids in sorted(students_by_cohort.items()):
+        if not cohort_member_ids:
+            continue
+        path_index = study_paths.index(path)
+        academic_id = f"academic-p{path_index}-s{semester}"
+        topic_tags = STUDY_PATH_TOPICS[path][:3]
+        groups[academic_id] = StudyGroup(
+            id=academic_id,
+            name=f"{path} - Semester {semester}",
+            category="Academic",
+            description=f"Official semester {semester} room for {path}.",
+            primary_study_path=path,
+            topic_tags=list(topic_tags),
+            member_ids=list(cohort_member_ids),
+            is_student_made=False,
+        )
+        for student_id in cohort_member_ids:
+            students[student_id].joined_group_ids.append(academic_id)
+
     messages: list[Message] = []
     total_messages = config.messages_per_day * config.num_days
     available_groups = [group for group in groups.values() if group.member_ids]
+    # Student-made groups are where topical discussion that drives recommendation
+    # happens; academic rooms are chatty but down-weighted so they do not starve
+    # the student-made groups of the message/topic signal the recommender needs.
     group_message_weights = [
-        (len(group.member_ids) ** 1.35) + popularity_bias[group.id]
+        ((len(group.member_ids) ** 1.35) + popularity_bias.get(group.id, 0.1))
+        * (1.0 if group.is_student_made else 0.4)
         for group in available_groups
     ]
 

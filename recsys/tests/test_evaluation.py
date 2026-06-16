@@ -90,12 +90,22 @@ class EvaluationHelpersTest(unittest.TestCase):
         self.assertTrue(warm_student_ids)
         for student_id in cold_student_ids:
             self.assertIn(student_id, held_out)
-            self.assertEqual(train_dataset.students[student_id].joined_group_ids, [])
+            # Student-made memberships are stripped (they are the held-out
+            # targets); academic scaffolding membership is kept as context.
+            remaining = train_dataset.students[student_id].joined_group_ids
+            self.assertTrue(
+                all(not train_dataset.groups[gid].is_student_made for gid in remaining)
+            )
             self.assertFalse(
                 any(message.sender_id == student_id for message in train_dataset.messages)
             )
+            # No student-made group still lists the cold student as a member.
             self.assertTrue(
-                all(student_id not in group.member_ids for group in train_dataset.groups.values())
+                all(
+                    student_id not in group.member_ids
+                    for group in train_dataset.groups.values()
+                    if group.is_student_made
+                )
             )
 
 
