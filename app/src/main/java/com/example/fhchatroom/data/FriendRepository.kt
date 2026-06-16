@@ -356,16 +356,28 @@ class FriendsRepository(private val firestore: FirebaseFirestore) {
         return try {
             Log.d(TAG, "Searching users with query: $query")
 
-            val users = firestore.collection("users")
-                .orderBy("firstName")
-                .startAt(query)
-                .endAt(query + "\uf8ff")
-                .get()
-                .await()
+            // Firestore has no case-insensitive or multi-field text search, and
+            // the previous orderBy("firstName").startAt(query) was a
+            // case-SENSITIVE prefix match on first name only -- it silently
+            // missed users when the case differed (e.g. "bah" never matched
+            // "Bahareh") or when the query was a surname/email. At campus scale
+            // the correct, simple fix is to read the (signed-in-readable) users
+            // collection and filter on the client across first name, last name,
+            // and email, case-insensitively, so every matching user is shown.
+            val normalized = query.trim().lowercase()
+            val users = firestore.collection("users").get().await()
 
             val userList = users.documents.mapNotNull { doc ->
                 doc.toUserOrNull()
-            }.filter { it.email != currentUserEmail } // Exclude current user
+            }
+                .filter { it.email != currentUserEmail } // Exclude current user
+                .filter { user ->
+                    normalized.isEmpty() ||
+                        user.firstName.lowercase().contains(normalized) ||
+                        user.lastName.lowercase().contains(normalized) ||
+                        user.email.lowercase().contains(normalized)
+                }
+                .sortedBy { "${it.firstName} ${it.lastName}".trim().lowercase() }
 
             Log.d(TAG, "Found ${userList.size} users matching query")
             Result.Success(userList)
