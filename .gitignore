@@ -93,10 +93,13 @@ docs/*.pdf
 docs/ba2/*.pdf
 docs/ba2.zip
 # Experiment run directories (large); results.json is tracked explicitly
-recsys_experiments/seed43/
-recsys_experiments/seed44/
-recsys_experiments/friends_on/
-recsys_experiments/ablation_smtrain/
-recsys_experiments/ablation_smtrain_e100/
-recsys_experiments/diag_epochs200/
+# Experiment runs: ignore the bulky regenerable artefacts (figures, embeddings,
+# logs) but ALWAYS track each run's results.json. Those files are cited in the
+# thesis -- friends_on backs Section 4.11's macros, so the document does not
+# even compile without it, and seed43/seed44 are the evidence for the
+# three-seed replication in the Threats to Validity section. A file the build
+# or a claim depends on must not be ignored.
+recsys_experiments/*/figures/
+recsys_experiments/*/embeddings*.json
 recsys_experiments/*.log
+!recsys_experiments/*/results.json

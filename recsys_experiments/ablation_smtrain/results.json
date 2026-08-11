@@ -1,0 +1,445 @@
+{
+  "protocol": {
+    "datasetConfig": {
+      "students": 2000,
+      "groups": 100,
+      "topics": 50,
+      "messagesPerDay": 150,
+      "days": 14
+    },
+    "split": "temporal-onboarding",
+    "coldStartRatio": 0.25,
+    "topK": 10,
+    "epochs": 20,
+    "embeddingDim": 16,
+    "seed": 42
+  },
+  "segments": {
+    "warmStudents": 1500,
+    "coldStudents": 500,
+    "heldOutUsers": 2000
+  },
+  "hinSummary": {
+    "nodeCounts": {
+      "Student": 2000,
+      "Group": 135,
+      "Message": 1173,
+      "Topic": 50
+    },
+    "edgeCounts": {
+      "MEMBER_OF": 6986,
+      "SENDS": 1173,
+      "POSTED_IN": 1173,
+      "CONTAINS": 1173,
+      "RELATED_TO": 1276,
+      "INTERESTED_IN": 9880
+    }
+  },
+  "trainingData": {
+    "positivePairs": 2986,
+    "trainingTriplets": 8958,
+    "negativePairSources": {
+      "hard": 5972,
+      "random": 2986
+    },
+    "featureDimension": 106
+  },
+  "modelMetrics": {
+    "random": {
+      "all": {
+        "precisionAtK": 0.0143,
+        "recallAtK": 0.093708,
+        "ndcgAtK": 0.0466,
+        "hitRateAtK": 0.137,
+        "mrr": 0.040185,
+        "evaluatedUsers": 2000
+      },
+      "warm": {
+        "precisionAtK": 0.0092,
+        "recallAtK": 0.092,
+        "ndcgAtK": 0.041511,
+        "hitRateAtK": 0.092,
+        "mrr": 0.026669,
+        "evaluatedUsers": 1500
+      },
+      "cold": {
+        "precisionAtK": 0.0296,
+        "recallAtK": 0.098833,
+        "ndcgAtK": 0.061866,
+        "hitRateAtK": 0.272,
+        "mrr": 0.080732,
+        "evaluatedUsers": 500
+      },
+      "coldStartRobustnessNdcgAtK": 1.490341
+    },
+    "popularity": {
+      "all": {
+        "precisionAtK": 0.0159,
+        "recallAtK": 0.111792,
+        "ndcgAtK": 0.05377,
+        "hitRateAtK": 0.154,
+        "mrr": 0.043379,
+        "evaluatedUsers": 2000
+      },
+      "warm": {
+        "precisionAtK": 0.011733,
+        "recallAtK": 0.117333,
+        "ndcgAtK": 0.051947,
+        "hitRateAtK": 0.117333,
+        "mrr": 0.03246,
+        "evaluatedUsers": 1500
+      },
+      "cold": {
+        "precisionAtK": 0.0284,
+        "recallAtK": 0.095167,
+        "ndcgAtK": 0.059241,
+        "hitRateAtK": 0.264,
+        "mrr": 0.076136,
+        "evaluatedUsers": 500
+      },
+      "coldStartRobustnessNdcgAtK": 1.140418
+    },
+    "content": {
+      "all": {
+        "precisionAtK": 0.04025,
+        "recallAtK": 0.27075,
+        "ndcgAtK": 0.140479,
+        "hitRateAtK": 0.353,
+        "mrr": 0.118098,
+        "evaluatedUsers": 2000
+      },
+      "warm": {
+        "precisionAtK": 0.027467,
+        "recallAtK": 0.274667,
+        "ndcgAtK": 0.131527,
+        "hitRateAtK": 0.274667,
+        "mrr": 0.088804,
+        "evaluatedUsers": 1500
+      },
+      "cold": {
+        "precisionAtK": 0.0786,
+        "recallAtK": 0.259,
+        "ndcgAtK": 0.167336,
+        "hitRateAtK": 0.588,
+        "mrr": 0.205981,
+        "evaluatedUsers": 500
+      },
+      "coldStartRobustnessNdcgAtK": 1.272258
+    },
+    "node2vec": {
+      "all": {
+        "precisionAtK": 0.03585,
+        "recallAtK": 0.249042,
+        "ndcgAtK": 0.121358,
+        "hitRateAtK": 0.325,
+        "mrr": 0.098672,
+        "evaluatedUsers": 2000
+      },
+      "warm": {
+        "precisionAtK": 0.025867,
+        "recallAtK": 0.258667,
+        "ndcgAtK": 0.11452,
+        "hitRateAtK": 0.258667,
+        "mrr": 0.071997,
+        "evaluatedUsers": 1500
+      },
+      "cold": {
+        "precisionAtK": 0.0658,
+        "recallAtK": 0.220167,
+        "ndcgAtK": 0.141873,
+        "hitRateAtK": 0.524,
+        "mrr": 0.178698,
+        "evaluatedUsers": 500
+      },
+      "coldStartRobustnessNdcgAtK": 1.238852
+    },
+    "graphsage": {
+      "all": {
+        "precisionAtK": 0.034,
+        "recallAtK": 0.228708,
+        "ndcgAtK": 0.118201,
+        "hitRateAtK": 0.306,
+        "mrr": 0.101939,
+        "evaluatedUsers": 2000
+      },
+      "warm": {
+        "precisionAtK": 0.023133,
+        "recallAtK": 0.231333,
+        "ndcgAtK": 0.109556,
+        "hitRateAtK": 0.231333,
+        "mrr": 0.07352,
+        "evaluatedUsers": 1500
+      },
+      "cold": {
+        "precisionAtK": 0.0666,
+        "recallAtK": 0.220833,
+        "ndcgAtK": 0.144137,
+        "hitRateAtK": 0.53,
+        "mrr": 0.187198,
+        "evaluatedUsers": 500
+      },
+      "coldStartRobustnessNdcgAtK": 1.315648
+    },
+    "lightgcn": {
+      "all": {
+        "precisionAtK": 0.016,
+        "recallAtK": 0.105125,
+        "ndcgAtK": 0.053858,
+        "hitRateAtK": 0.1495,
+        "mrr": 0.046422,
+        "evaluatedUsers": 2000
+      },
+      "warm": {
+        "precisionAtK": 0.010467,
+        "recallAtK": 0.104667,
+        "ndcgAtK": 0.048895,
+        "hitRateAtK": 0.104667,
+        "mrr": 0.032243,
+        "evaluatedUsers": 1500
+      },
+      "cold": {
+        "precisionAtK": 0.0326,
+        "recallAtK": 0.1065,
+        "ndcgAtK": 0.068747,
+        "hitRateAtK": 0.284,
+        "mrr": 0.08896,
+        "evaluatedUsers": 500
+      },
+      "coldStartRobustnessNdcgAtK": 1.406005
+    }
+  },
+  "hypothesisTests": {
+    "H1_graphsage_vs_lightgcn_cold_ndcg": {
+      "metric": "ndcg",
+      "numUsers": 500,
+      "meanA": 0.144137,
+      "meanB": 0.068747,
+      "meanDifference": 0.07539,
+      "alpha": 0.05,
+      "numHypotheses": 2,
+      "alphaBonferroniAdjusted": 0.025,
+      "tStatistic": 7.637357,
+      "tPValue": 1.1398571564851412e-13,
+      "wilcoxonStatistic": 13722.5,
+      "wilcoxonPValue": 1.976439987358715e-14,
+      "cohensD": 0.341553,
+      "significant": true
+    },
+    "H2_lightgcn_vs_graphsage_warm_recall": {
+      "metric": "recall",
+      "numUsers": 1500,
+      "meanA": 0.104667,
+      "meanB": 0.231333,
+      "meanDifference": -0.126667,
+      "alpha": 0.05,
+      "numHypotheses": 2,
+      "alphaBonferroniAdjusted": 0.025,
+      "tStatistic": -9.473965,
+      "tPValue": 1.0097315530922734e-20,
+      "wilcoxonStatistic": 25193.0,
+      "wilcoxonPValue": 3.399889554922872e-20,
+      "cohensD": -0.244617,
+      "significant": true
+    },
+    "supplementary_graphsage_vs_content_cold_ndcg": {
+      "metric": "ndcg",
+      "numUsers": 500,
+      "meanA": 0.144137,
+      "meanB": 0.167336,
+      "meanDifference": -0.023199,
+      "alpha": 0.05,
+      "numHypotheses": 2,
+      "alphaBonferroniAdjusted": 0.025,
+      "tStatistic": -3.965775,
+      "tPValue": 8.386300383836388e-05,
+      "wilcoxonStatistic": 16140.5,
+      "wilcoxonPValue": 0.00020171601601940586,
+      "cohensD": -0.177355,
+      "significant": true
+    }
+  },
+  "fairness": {
+    "graphsage_all": {
+      "metric": "ndcg",
+      "cohorts": {
+        "Applied Electronics": {
+          "numUsers": 401,
+          "mean": 0.12599,
+          "median": 0.0
+        },
+        "Biomedical Science": {
+          "numUsers": 406,
+          "mean": 0.07621,
+          "median": 0.0
+        },
+        "Computer Science and Digital Communications": {
+          "numUsers": 383,
+          "mean": 0.106117,
+          "median": 0.0
+        },
+        "Health Care and Nursing": {
+          "numUsers": 405,
+          "mean": 0.131346,
+          "median": 0.0
+        },
+        "Social Work": {
+          "numUsers": 405,
+          "mean": 0.150867,
+          "median": 0.0
+        }
+      },
+      "hStatistic": 40.852141,
+      "pValue": 2.884116624793352e-08,
+      "alpha": 0.05,
+      "significantDisparity": true
+    },
+    "graphsage_cold": {
+      "metric": "ndcg",
+      "cohorts": {
+        "Applied Electronics": {
+          "numUsers": 98,
+          "mean": 0.146064,
+          "median": 0.140162
+        },
+        "Biomedical Science": {
+          "numUsers": 106,
+          "mean": 0.10039,
+          "median": 0.0
+        },
+        "Computer Science and Digital Communications": {
+          "numUsers": 88,
+          "mean": 0.151098,
+          "median": 0.121486
+        },
+        "Health Care and Nursing": {
+          "numUsers": 101,
+          "mean": 0.149415,
+          "median": 0.141267
+        },
+        "Social Work": {
+          "numUsers": 107,
+          "mean": 0.175004,
+          "median": 0.15102
+        }
+      },
+      "hStatistic": 13.449847,
+      "pValue": 0.009274638459381864,
+      "alpha": 0.05,
+      "significantDisparity": true
+    },
+    "lightgcn_all": {
+      "metric": "ndcg",
+      "cohorts": {
+        "Applied Electronics": {
+          "numUsers": 401,
+          "mean": 0.044863,
+          "median": 0.0
+        },
+        "Biomedical Science": {
+          "numUsers": 406,
+          "mean": 0.045894,
+          "median": 0.0
+        },
+        "Computer Science and Digital Communications": {
+          "numUsers": 383,
+          "mean": 0.049217,
+          "median": 0.0
+        },
+        "Health Care and Nursing": {
+          "numUsers": 405,
+          "mean": 0.06877,
+          "median": 0.0
+        },
+        "Social Work": {
+          "numUsers": 405,
+          "mean": 0.060224,
+          "median": 0.0
+        }
+      },
+      "hStatistic": 4.435605,
+      "pValue": 0.3502514965790063,
+      "alpha": 0.05,
+      "significantDisparity": false
+    }
+  },
+  "beyondAccuracy": {
+    "random": {
+      "coverage": 1.0,
+      "diversity": 0.841698
+    },
+    "popularity": {
+      "coverage": 0.13,
+      "diversity": 0.846308
+    },
+    "content": {
+      "coverage": 1.0,
+      "diversity": 0.550419
+    },
+    "node2vec": {
+      "coverage": 1.0,
+      "diversity": 0.648303
+    },
+    "graphsage": {
+      "coverage": 1.0,
+      "diversity": 0.607795
+    },
+    "lightgcn": {
+      "coverage": 1.0,
+      "diversity": 0.848121
+    }
+  },
+  "dpSweep": [],
+  "timingsSeconds": {
+    "random": 0.1,
+    "popularity": 0.0,
+    "content": 8.4,
+    "node2vec": 1390.4,
+    "graphsage": 435.7,
+    "lightgcn": 244.3
+  },
+  "graphsageLosses": [
+    0.6994839989816121,
+    0.6993224357161428,
+    0.6991615118197194,
+    0.6990012217042008,
+    0.6988415598382653,
+    0.6986825207472317,
+    0.6985240990128648,
+    0.6983662892731672,
+    0.698209086222155,
+    0.698052484609621,
+    0.6978964792408845,
+    0.6977410649765292,
+    0.6975862367321277,
+    0.6974319894779567,
+    0.6972783182387006,
+    0.6971252180931446,
+    0.6969726841738592,
+    0.696820711666874,
+    0.6966692958113452,
+    0.6965184318992125
+  ],
+  "lightgcnLosses": [
+    0.6614355020585161,
+    0.6614344882694583,
+    0.6614334744504946,
+    0.661432460601624,
+    0.6614314467228456,
+    0.6614304328141584,
+    0.661429418875562,
+    0.6614284049070548,
+    0.6614273909086363,
+    0.6614263768803058,
+    0.661425362822062,
+    0.6614243487339044,
+    0.6614233346158319,
+    0.6614223204678437,
+    0.6614213062899388,
+    0.6614202920821165,
+    0.6614192778443757,
+    0.6614182635767155,
+    0.6614172492791355,
+    0.6614162349516342
+  ],
+  "totalSeconds": 2086.2
+}
