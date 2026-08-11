@@ -66,7 +66,17 @@ def _decode(value: dict) -> object:
 
 def _document_to_dict(document: dict) -> dict:
     row = {key: _decode(value) for key, value in document.get("fields", {}).items()}
-    row.setdefault("id", document["name"].rsplit("/", 1)[-1])
+    # The document path is the authoritative identifier. An `id` *field* may
+    # exist and still be blank: the client's data classes declare
+    # `val id: String = ""` (Room.kt, Message.kt), so a room created in-app
+    # persists an empty id while rooms written with a deterministic key (the
+    # academic rooms) carry a real one. `setdefault` treats the blank field as
+    # present and leaves it empty, and the ingestion adapter skips any room
+    # without an id -- which silently dropped every student-made group, i.e.
+    # exactly the rooms the recommender exists to recommend. Fall back to the
+    # path whenever the field is missing *or* empty.
+    if not str(row.get("id") or "").strip():
+        row["id"] = document["name"].rsplit("/", 1)[-1]
     return row
 
 
