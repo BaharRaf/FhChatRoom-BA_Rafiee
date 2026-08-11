@@ -1,0 +1,13 @@
+# Python dependencies of the recsys pipeline (thesis artifact).
+# The runtime footprint is exactly NumPy, SciPy, and Matplotlib, as stated in
+# the thesis (Implementation chapter); pytest is needed only to run the tests.
+# Versions are pinned to the environment that produced every number in the
+# thesis (recsys_experiments/results.json); newer versions are expected to
+# work, with residual run-to-run variation confined to the third decimal
+# (BLAS reduction order -- see the thesis's reproducibility note).
+numpy==1.26.4
+scipy==1.11.4
+matplotlib==3.8.0
+
+# Testing
+pytest==7.4.0

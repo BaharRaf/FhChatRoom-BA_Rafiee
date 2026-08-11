@@ -11,6 +11,7 @@ from typing import Any
 
 from recsys.models import HINGraph
 from recsys.models import SyntheticDataset
+from recsys.scoring import sparse_cosine_similarity
 
 
 def torch_available() -> bool:
@@ -28,6 +29,11 @@ class GraphSAGEConfig:
     hard_negative_pool_factor: int = 4
     cold_start_interaction_threshold: int = 5
     seed: int = 42
+    # When True, training positives and negative candidates are restricted to
+    # student-made groups (the actual recommendation targets); auto-assigned
+    # academic-room enrolments stay in the graph as aggregation context but no
+    # longer act as (administrative, non-organic) supervision signal.
+    student_made_positives_only: bool = False
 
 
 @dataclass
@@ -254,19 +260,6 @@ def _build_adjacency(
     return adjacency, relation_adjacency, dict(relation_counts)
 
 
-def _sparse_cosine_similarity(left: dict[str, float], right: dict[str, float]) -> float:
-    if not left or not right:
-        return 0.0
-
-    shared = set(left) & set(right)
-    numerator = sum(left[key] * right[key] for key in shared)
-    left_norm = sum(value * value for value in left.values()) ** 0.5
-    right_norm = sum(value * value for value in right.values()) ** 0.5
-    if left_norm == 0.0 or right_norm == 0.0:
-        return 0.0
-    return numerator / (left_norm * right_norm)
-
-
 def _hard_negative_score(
     dataset: SyntheticDataset,
     hin: HINGraph,
@@ -276,7 +269,7 @@ def _hard_negative_score(
     student = dataset.students[student_id]
     group = dataset.groups[group_id]
 
-    topic_similarity = _sparse_cosine_similarity(
+    topic_similarity = sparse_cosine_similarity(
         hin.student_topic_weights.get(student_id, {}),
         hin.group_topic_weights.get(group_id, {}),
     )
@@ -301,14 +294,20 @@ def _build_training_pairs(
     config: GraphSAGEConfig,
 ) -> tuple[list[tuple[str, str]], list[tuple[str, str]], list[tuple[str, str, str]], dict[str, int]]:
     rng = random.Random(config.seed)
-    all_group_ids = list(dataset.groups.keys())
+    if config.student_made_positives_only:
+        all_group_ids = [
+            group_id for group_id, group in dataset.groups.items() if group.is_student_made
+        ]
+    else:
+        all_group_ids = list(dataset.groups.keys())
+    candidate_universe = set(all_group_ids)
     positive_pairs: list[tuple[str, str]] = []
     negative_pairs: list[tuple[str, str]] = []
     training_triplets: list[tuple[str, str, str]] = []
     negative_pair_sources: Counter[str] = Counter()
 
     for student in dataset.students.values():
-        joined_group_ids = set(student.joined_group_ids)
+        joined_group_ids = set(student.joined_group_ids) & candidate_universe
         if not joined_group_ids:
             continue
 

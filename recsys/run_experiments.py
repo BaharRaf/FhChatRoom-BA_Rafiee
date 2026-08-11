@@ -89,10 +89,41 @@ def parse_args() -> argparse.Namespace:
     # <=20 epochs and declines beyond ~25 (overfitting of the contrastive
     # objective on sparse memberships).
     parser.add_argument("--epochs", type=int, default=20)
+    parser.add_argument(
+        "--lightgcn-epochs",
+        type=int,
+        default=LightGCNConfig.epochs,
+        help="Validation-selected LightGCN training length (recsys.run_lightgcn_lr_selection).",
+    )
+    parser.add_argument(
+        "--lightgcn-learning-rate",
+        type=float,
+        default=LightGCNConfig.learning_rate,
+        help="Validation-selected LightGCN learning rate (recsys.run_lightgcn_lr_selection).",
+    )
     parser.add_argument("--embedding-dim", type=int, default=16)
     parser.add_argument("--hidden-dim", type=int, default=32)
     parser.add_argument("--cold-start-ratio", type=float, default=0.25)
     parser.add_argument("--top-k", type=int, default=10)
+    parser.add_argument(
+        "--student-made-training",
+        action="store_true",
+        help=(
+            "Restrict training positives and negative candidates to student-made "
+            "groups (academic rooms remain graph context only). Off by default: "
+            "the frozen BA1 protocol trains on all memberships."
+        ),
+    )
+    parser.add_argument(
+        "--friends-per-student",
+        type=int,
+        default=0,
+        help=(
+            "Mean accepted friendships per student. 0 (default) reproduces the "
+            "frozen BA1 protocol, whose HIN has no friendship relation; a positive "
+            "value enables the FRIENDS_WITH social-graph ablation."
+        ),
+    )
     parser.add_argument("--skip-dp-sweep", action="store_true")
     parser.add_argument(
         "--dp-clip-norm",
@@ -138,7 +169,10 @@ def _train_graphsage(
     prep = prepare_graphsage_training_data(
         dataset=train_dataset,
         hin=hin,
-        config=GraphSAGEConfig(seed=args.seed),
+        config=GraphSAGEConfig(
+            seed=args.seed,
+            student_made_positives_only=getattr(args, "student_made_training", False),
+        ),
     )
     result = train_graphsage_embeddings(
         prep=prep,
@@ -175,6 +209,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             num_topics=args.topics,
             messages_per_day=args.messages_per_day,
             num_days=args.days,
+            friends_per_student=args.friends_per_student,
         ),
         seed=args.seed,
     )
@@ -229,7 +264,13 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         prep=prep,
         config=LightGCNConfig(
             embedding_dim=args.embedding_dim,
-            epochs=args.epochs,
+            # Each model uses its OWN validation-selected training length
+            # (GraphSAGE: recsys.run_epoch_selection; LightGCN:
+            # recsys.run_lightgcn_lr_selection). Forcing the baseline onto
+            # GraphSAGE's epoch count would under-train it -- see the note in
+            # LightGCNConfig.
+            epochs=args.lightgcn_epochs,
+            learning_rate=args.lightgcn_learning_rate,
             seed=args.seed,
         ),
     )

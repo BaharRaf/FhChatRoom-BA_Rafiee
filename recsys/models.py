@@ -32,6 +32,12 @@ class Student:
     semester_bucket: str
     preferred_topics: list[str]
     joined_group_ids: list[str] = field(default_factory=list)
+    # Accepted friendships (symmetric). The FhChatRoom client maintains a
+    # social graph that the BA1 HIN schema did not model; it is the only
+    # per-student signal a brand-new student can carry before joining any
+    # group, and therefore the only thing that can distinguish two cold
+    # students of the same study path and semester.
+    friend_ids: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -70,6 +76,10 @@ class DatasetConfig:
     num_days: int = 14
     min_groups_per_student: int = 2
     max_groups_per_student: int = 4
+    # Mean number of accepted friendships per student. 0 keeps the frozen BA1
+    # protocol exactly as specified (its HIN has no friendship relation); a
+    # positive value enables the social-graph ablation of Section 4.11.
+    friends_per_student: int = 0
 
 
 @dataclass

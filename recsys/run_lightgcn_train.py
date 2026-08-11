@@ -30,7 +30,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--messages-per-day", type=int, default=250)
     parser.add_argument("--days", type=int, default=14)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--epochs", type=int, default=150)
+    parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--learning-rate", type=float, default=0.05)
     parser.add_argument("--negative-samples-per-positive", type=int, default=3)
     parser.add_argument("--hard-negative-ratio", type=float, default=0.67)

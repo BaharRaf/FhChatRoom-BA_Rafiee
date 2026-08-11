@@ -5,7 +5,6 @@ import time
 from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
-from statistics import median
 from types import SimpleNamespace
 
 import numpy as np
@@ -19,6 +18,14 @@ from recsys.privacy import DPConfig
 from recsys.privacy import GradientDPConfig
 from recsys.privacy import clip_and_noise_gradient
 from recsys.privacy import perturb_relation_matrix
+from recsys.scoring import cosine_similarity
+from recsys.scoring import jaccard_similarity
+from recsys.scoring import max_group_size
+from recsys.scoring import peer_set
+from recsys.scoring import popularity
+from recsys.scoring import semester_proximity
+from recsys.scoring import sparse_cosine_similarity
+from recsys.scoring import study_path_affinity
 
 
 @dataclass(frozen=True)
@@ -27,12 +34,17 @@ class GraphSAGETrainConfig:
     embedding_dim: int = 16
     num_layers: int = 2
     learning_rate: float = 0.05
-    epochs: int = 150
+    # Validated training length (recsys.run_epoch_selection): quality is flat
+    # from 0 to ~50 epochs; the protocol fixes 20 on that plateau.
+    epochs: int = 20
     weight_decay: float = 1e-4
     self_loop_weight: float = 0.35
     relation_weights: dict[str, float] = field(
         default_factory=lambda: {
             "MEMBER_OF": 1.6,
+            # Friendship is a deliberate, mutually confirmed tie, so it is
+            # weighted just below co-membership and above topical interest.
+            "FRIENDS_WITH": 1.45,
             "INTERESTED_IN": 1.35,
             "RELATED_TO": 1.35,
             "SENDS": 0.85,
@@ -374,66 +386,8 @@ def embed_cold_student(
     return embeddings[node_index[student.id]].tolist()
 
 
-def _cosine_similarity(left: np.ndarray, right: np.ndarray) -> float:
-    denominator = np.linalg.norm(left) * np.linalg.norm(right)
-    if denominator == 0.0:
-        return 0.0
-    return float(np.dot(left, right) / denominator)
-
-
-def _sparse_cosine_similarity(left: dict[str, float], right: dict[str, float]) -> float:
-    if not left or not right:
-        return 0.0
-    shared = set(left) & set(right)
-    numerator = sum(left[key] * right[key] for key in shared)
-    left_norm = sum(value * value for value in left.values()) ** 0.5
-    right_norm = sum(value * value for value in right.values()) ** 0.5
-    if left_norm == 0.0 or right_norm == 0.0:
-        return 0.0
-    return numerator / (left_norm * right_norm)
-
-
-def _jaccard_similarity(left: set[str], right: set[str]) -> float:
-    union = left | right
-    if not union:
-        return 0.0
-    return len(left & right) / len(union)
-
-
-def _peer_set(dataset: SyntheticDataset, student_id: str) -> set[str]:
-    peer_ids: set[str] = set()
-    student = dataset.students[student_id]
-    for group_id in student.joined_group_ids:
-        peer_ids.update(dataset.groups[group_id].member_ids)
-    peer_ids.discard(student_id)
-    return peer_ids
-
-
-def _study_path_affinity(dataset: SyntheticDataset, student_id: str, group_id: str) -> float:
-    student = dataset.students[student_id]
-    group = dataset.groups[group_id]
-    if not group.member_ids:
-        return 1.0 if group.primary_study_path == student.study_path else 0.0
-    matching_members = sum(
-        1
-        for member_id in group.member_ids
-        if dataset.students[member_id].study_path == student.study_path
-    )
-    return matching_members / len(group.member_ids)
-
-
-def _semester_proximity(dataset: SyntheticDataset, student_id: str, group_id: str) -> float:
-    student = dataset.students[student_id]
-    group = dataset.groups[group_id]
-    if not group.member_ids:
-        return 0.0
-    group_median = median(dataset.students[member_id].semester for member_id in group.member_ids)
-    return 1.0 / (1.0 + abs(student.semester - group_median))
-
-
-def _popularity(dataset: SyntheticDataset, group_id: str) -> float:
-    max_size = max((len(group.member_ids) for group in dataset.groups.values()), default=1)
-    return len(dataset.groups[group_id].member_ids) / max(max_size, 1)
+# Scoring signals live in recsys.scoring (shared with the baselines); the
+# GraphSAGE ranker keeps the primary-path fallback for empty groups.
 
 
 def build_graphsage_recommendations(
@@ -443,6 +397,7 @@ def build_graphsage_recommendations(
     top_k: int = 10,
 ) -> dict[str, list[dict[str, object]]]:
     recommendations: dict[str, list[dict[str, object]]] = {}
+    largest_group = max_group_size(dataset)
 
     for student_id, student in dataset.students.items():
         student_embedding = np.asarray(training_result.embeddings.get(student_id, []), dtype=np.float64)
@@ -451,7 +406,7 @@ def build_graphsage_recommendations(
             continue
 
         joined_group_ids = set(student.joined_group_ids)
-        peer_ids = _peer_set(dataset, student_id)
+        peer_ids = peer_set(dataset, student_id)
         ranked: list[Recommendation] = []
 
         for group_id, group in dataset.groups.items():
@@ -461,26 +416,28 @@ def build_graphsage_recommendations(
             group_embedding = np.asarray(training_result.embeddings.get(group_id, []), dtype=np.float64)
             if group_embedding.size == 0:
                 continue
-            embedding_similarity = _cosine_similarity(student_embedding, group_embedding)
-            topic_similarity = _sparse_cosine_similarity(
+            embedding_similarity = cosine_similarity(student_embedding, group_embedding)
+            topic_similarity = sparse_cosine_similarity(
                 hin.student_topic_weights.get(student_id, {}),
                 hin.group_topic_weights.get(group_id, {}),
             )
-            study_path_affinity = _study_path_affinity(dataset, student_id, group_id)
-            semester_proximity = _semester_proximity(dataset, student_id, group_id)
-            popularity = _popularity(dataset, group_id)
-            member_similarity = _jaccard_similarity(peer_ids, set(group.member_ids))
+            path_affinity = study_path_affinity(
+                dataset, student_id, group_id, empty_group_uses_primary_path=True
+            )
+            sem_proximity = semester_proximity(dataset, student_id, group_id)
+            group_popularity = popularity(dataset, group_id, largest_group)
+            member_similarity = jaccard_similarity(peer_ids, set(group.member_ids))
             serendipity = topic_similarity * (1.0 - member_similarity)
             relevance = (
                 (0.65 * embedding_similarity)
                 + (0.2 * topic_similarity)
-                + (0.1 * study_path_affinity)
-                + (0.05 * semester_proximity)
+                + (0.1 * path_affinity)
+                + (0.05 * sem_proximity)
             )
             score = (
                 (0.8 * relevance)
                 + (0.15 * serendipity)
-                + (0.05 * popularity)
+                + (0.05 * group_popularity)
             )
             ranked.append(
                 Recommendation(
@@ -490,9 +447,9 @@ def build_graphsage_recommendations(
                     score=score,
                     breakdown=RecommendationBreakdown(
                         topic_similarity=topic_similarity,
-                        study_path_affinity=study_path_affinity,
-                        semester_proximity=semester_proximity,
-                        popularity=popularity,
+                        study_path_affinity=path_affinity,
+                        semester_proximity=sem_proximity,
+                        popularity=group_popularity,
                         serendipity=serendipity,
                         relevance=relevance,
                     ),

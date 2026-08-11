@@ -1,0 +1,37 @@
+# CI for the FhChatRoom BA2 artifact.
+# Guards the thesis's frozen numbers: the recsys test suite (67 tests,
+# including determinism and privacy-boundary checks) must pass on every push.
+name: CI
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+  workflow_dispatch:
+
+jobs:
+  recsys-tests:
+    name: recsys test suite (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pinned dependencies
+        run: pip install -r requirements.txt
+      - name: Run test suite
+        run: python -m pytest recsys/tests -q
+
+  android-unit-tests:
+    name: Android unit tests (gradle)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --no-daemon

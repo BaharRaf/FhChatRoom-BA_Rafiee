@@ -37,13 +37,30 @@ DEFAULT_GRID = [0, 5, 10, 15, 20, 25, 40, 50, 75, 100, 150]
 
 
 def build_validation_split(train_dataset):
-    """Holds out one more membership per warm student (train data only)."""
+    """Holds out one more *student-made* membership per warm student (train data only).
+
+    The recommender only ranks student-made groups (academic rooms are
+    auto-assigned scaffolding, never recommendation targets), so the held-out
+    validation membership must itself be student-made -- otherwise it can never
+    appear in a ranked list and validation NDCG is zero by construction. The
+    last student-made membership is held out while the student keeps every
+    academic room and any earlier student-made memberships as context, exactly
+    mirroring the warm-test construction in build_temporal_onboarding_targets.
+    """
     val_train = deepcopy(train_dataset)
     val_targets: dict[str, list[str]] = {}
     for student_id in sorted(val_train.students):
         student = val_train.students[student_id]
-        if len(student.joined_group_ids) >= 2:
-            group_id = student.joined_group_ids.pop()
+        student_made = [
+            group_id
+            for group_id in student.joined_group_ids
+            if val_train.groups[group_id].is_student_made
+        ]
+        # Need a student-made membership to hold out and at least one remaining
+        # membership (academic or student-made) to embed the student from.
+        if student_made and len(student.joined_group_ids) >= 2:
+            group_id = student_made[-1]
+            student.joined_group_ids.remove(group_id)
             val_targets[student_id] = [group_id]
             if student_id in val_train.groups[group_id].member_ids:
                 val_train.groups[group_id].member_ids.remove(student_id)

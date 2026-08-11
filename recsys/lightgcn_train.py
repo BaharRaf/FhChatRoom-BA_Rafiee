@@ -9,14 +9,28 @@ import numpy as np
 
 from recsys.graphsage_prep import GraphSAGEPreparedData
 from recsys.models import SyntheticDataset
+from recsys.scoring import max_group_size
+from recsys.scoring import popularity
 
 
 @dataclass(frozen=True)
 class LightGCNConfig:
     embedding_dim: int = 16
     num_layers: int = 3
-    learning_rate: float = 0.05
-    epochs: int = 150
+    # Validation-selected optimiser settings (recsys.run_lightgcn_lr_selection).
+    #
+    # The BPR gradient is averaged over all training triplets, so the per-
+    # parameter update scales as 1/|T|; at |T| ~ 2e4 a learning rate taken from
+    # mini-batch conventions (0.05) leaves the ID embeddings at their random
+    # initialisation -- the loss stays flat (0.6726 -> 0.6723 over 300 epochs)
+    # and validation NDCG@10 sits at 0.0485. Because this baseline carries
+    # hypotheses H1 and H2, its learning rate is chosen on evidence, on the same
+    # validation split used to fix GraphSAGE's epoch count, rather than by
+    # convention. Selected: lr=50, 100 epochs (val NDCG@10 0.0946, loss
+    # 0.6726 -> 0.3045); quality degrades beyond that point (lr=50/300 epochs
+    # -> 0.0712), i.e. the setting is a genuine optimum, not a ceiling.
+    learning_rate: float = 50.0
+    epochs: int = 100
     weight_decay: float = 1e-4
     seed: int = 42
 
@@ -252,17 +266,13 @@ def train_lightgcn_embeddings(
     )
 
 
-def _popularity(dataset: SyntheticDataset, group_id: str) -> float:
-    max_size = max((len(group.member_ids) for group in dataset.groups.values()), default=1)
-    return len(dataset.groups[group_id].member_ids) / max(max_size, 1)
-
-
 def build_lightgcn_recommendations(
     dataset: SyntheticDataset,
     training_result: LightGCNTrainingResult,
     top_k: int = 10,
 ) -> dict[str, list[dict[str, object]]]:
     recommendations: dict[str, list[dict[str, object]]] = {}
+    largest_group = max_group_size(dataset)
 
     for student_id, student in dataset.students.items():
         joined_group_ids = set(student.joined_group_ids)
@@ -278,14 +288,14 @@ def build_lightgcn_recommendations(
             if group_id in joined_group_ids or not group.is_student_made:
                 continue
 
-            popularity = _popularity(dataset, group_id)
+            group_popularity = popularity(dataset, group_id, largest_group)
             collaborative_score = 0.0
             if not use_popularity_fallback:
                 group_embedding = np.asarray(training_result.group_embeddings.get(group_id, []), dtype=np.float64)
                 if group_embedding.size:
                     collaborative_score = float(np.dot(student_embedding, group_embedding))
 
-            score = popularity if use_popularity_fallback else collaborative_score
+            score = group_popularity if use_popularity_fallback else collaborative_score
             ranked.append(
                 {
                     "studentId": student_id,
@@ -293,7 +303,7 @@ def build_lightgcn_recommendations(
                     "groupName": group.name,
                     "score": round(score, 6),
                     "collaborativeScore": round(collaborative_score, 6),
-                    "popularity": round(popularity, 6),
+                    "popularity": round(group_popularity, 6),
                     "usedPopularityFallback": use_popularity_fallback,
                 }
             )

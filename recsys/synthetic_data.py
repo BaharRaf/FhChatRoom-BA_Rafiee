@@ -249,6 +249,55 @@ def generate_synthetic_dataset(config: DatasetConfig, seed: int = 42) -> Synthet
             )
         )
 
+    # Friendships (opt-in; config.friends_per_student == 0 reproduces the
+    # frozen BA1 protocol exactly). Real campus social graphs are homophilous,
+    # so candidates are drawn with a strong bias toward cohort peers and
+    # co-members rather than uniformly -- a uniform graph would carry no
+    # information and would make the ablation meaningless by construction.
+    if config.friends_per_student > 0:
+        student_ids_sorted = sorted(students)
+        cohort_index: dict[tuple[str, int], list[str]] = defaultdict(list)
+        for student_id in student_ids_sorted:
+            student = students[student_id]
+            cohort_index[(student.study_path, student.semester)].append(student_id)
+
+        for student_id in student_ids_sorted:
+            student = students[student_id]
+            peers = [
+                peer_id
+                for peer_id in cohort_index[(student.study_path, student.semester)]
+                if peer_id != student_id
+            ]
+            co_members = sorted(
+                {
+                    member_id
+                    for group_id in student.joined_group_ids
+                    if groups[group_id].is_student_made
+                    for member_id in groups[group_id].member_ids
+                    if member_id != student_id
+                }
+            )
+            # Draw each tie from a stratum rather than from a concatenated pool:
+            # repeating short lists cannot control the mixture when cohorts are
+            # small, which would leave the graph near-uniform and therefore
+            # signal-free. 60% cohort peer, 30% co-member, 10% weak tie.
+            # Each accepted friendship is stored on both students, so only half
+            # the target is initiated here to reach the requested mean degree.
+            target = max(1, round(config.friends_per_student / 2))
+            for _ in range(target):
+                draw = rng.random()
+                if draw < 0.6 and peers:
+                    candidate = rng.choice(peers)
+                elif draw < 0.9 and co_members:
+                    candidate = rng.choice(co_members)
+                else:
+                    candidate = rng.choice(student_ids_sorted)
+                if candidate == student_id or candidate in student.friend_ids:
+                    continue
+                student.friend_ids.append(candidate)
+                if student_id not in students[candidate].friend_ids:
+                    students[candidate].friend_ids.append(student_id)
+
     return SyntheticDataset(
         config=config,
         students=students,

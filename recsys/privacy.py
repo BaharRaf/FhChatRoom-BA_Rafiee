@@ -9,10 +9,15 @@ while low-sensitivity topical relations retain more utility.
 The mechanism perturbs each relation aggregation matrix once before training
 (input perturbation). Because every subsequent training step is
 post-processing of the noised aggregations, the privacy guarantee is
-determined by this single application of the Gaussian mechanism per relation;
-relations partition the edge set, so parallel composition applies across
-relations and the overall guarantee is governed by the highest-sensitivity
-tier (the full epsilon is consumed by the MEMBER_OF tier).
+determined by this single application of the Gaussian mechanism per relation.
+Relations partition the edge set, so parallel composition applies across
+relations: the configured epsilon is the budget of the most sensitive
+MEMBER_OF tier (which receives the full calibrated noise), while lower tiers
+receive less noise and therefore consume a larger effective epsilon, so the
+composed edge-level guarantee across all relations is governed by the
+least-noised tier (about epsilon/0.3 with the default multipliers). The
+classical Gaussian calibration used here is proven for epsilon < 1; larger
+budgets use it as a nominal calibration (see thesis Section 3.6).
 """
 
 from __future__ import annotations
@@ -29,6 +34,10 @@ import numpy as np
 #   Student -> Message -> Topic: low    (topical interest only)
 DEFAULT_RELATION_TIERS: dict[str, str] = {
     "MEMBER_OF": "high",
+    # A friendship directly identifies a social tie between two students and
+    # is at least as disclosive as a group membership, so it sits in the
+    # high-sensitivity tier and receives the full calibrated noise.
+    "FRIENDS_WITH": "high",
     "SENDS": "medium",
     "POSTED_IN": "medium",
     "CONTAINS": "medium",

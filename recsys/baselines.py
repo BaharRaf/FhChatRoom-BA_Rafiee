@@ -1,76 +1,37 @@
 from __future__ import annotations
 
 import time
-from statistics import median
 
 from recsys.models import HINGraph
 from recsys.models import Recommendation
 from recsys.models import RecommendationBreakdown
 from recsys.models import SyntheticDataset
+from recsys.scoring import jaccard_similarity
+from recsys.scoring import max_group_size
+from recsys.scoring import peer_set
+from recsys.scoring import popularity
+from recsys.scoring import semester_proximity
+from recsys.scoring import sparse_cosine_similarity
+from recsys.scoring import study_path_affinity
 
-
-def _cosine_similarity(left: dict[str, float], right: dict[str, float]) -> float:
-    if not left or not right:
-        return 0.0
-
-    shared_keys = set(left) & set(right)
-    numerator = sum(left[key] * right[key] for key in shared_keys)
-    left_norm = sum(value * value for value in left.values()) ** 0.5
-    right_norm = sum(value * value for value in right.values()) ** 0.5
-
-    if left_norm == 0 or right_norm == 0:
-        return 0.0
-
-    return numerator / (left_norm * right_norm)
-
-
-def _jaccard_similarity(left: set[str], right: set[str]) -> float:
-    union = left | right
-    if not union:
-        return 0.0
-    return len(left & right) / len(union)
-
-
-def _peer_set(dataset: SyntheticDataset, student_id: str) -> set[str]:
-    peer_ids: set[str] = set()
-    student = dataset.students[student_id]
-
-    for group_id in student.joined_group_ids:
-        peer_ids.update(dataset.groups[group_id].member_ids)
-
-    peer_ids.discard(student_id)
-    return peer_ids
-
-
-def _study_path_affinity(dataset: SyntheticDataset, student_id: str, group_id: str) -> float:
-    student = dataset.students[student_id]
-    group = dataset.groups[group_id]
-
-    if not group.member_ids:
-        return 0.0
-
-    matching_members = sum(
-        1
-        for member_id in group.member_ids
-        if dataset.students[member_id].study_path == student.study_path
-    )
-    return matching_members / len(group.member_ids)
-
-
-def _semester_proximity(dataset: SyntheticDataset, student_id: str, group_id: str) -> float:
-    student = dataset.students[student_id]
-    group = dataset.groups[group_id]
-
-    if not group.member_ids:
-        return 0.0
-
-    group_median = median(dataset.students[member_id].semester for member_id in group.member_ids)
-    return 1.0 / (1.0 + abs(student.semester - group_median))
-
-
-def _popularity(dataset: SyntheticDataset, group_id: str) -> float:
-    max_size = max((len(group.member_ids) for group in dataset.groups.values()), default=1)
-    return len(dataset.groups[group_id].member_ids) / max_size
+# Scoring signals live in recsys.scoring (shared with the GraphSAGE ranker);
+# the Content-Based ranker scores empty groups 0.0 for study-path affinity.
+#
+# The Content-Based baseline is the *feature-only ablation* of the GraphSAGE
+# ranking blend (see graphsage_train.build_graphsage_recommendations): it is
+# the same blend with the embedding-similarity term removed and the remaining
+# relevance weights renormalised, so a GraphSAGE-vs-Content-Based comparison
+# isolates exactly the contribution of the learned embedding.
+#
+#   GraphSAGE relevance : 0.65*embedding + 0.20*topic + 0.10*path + 0.05*semester
+#   Content-Based       :                  0.20/0.35*topic + 0.10/0.35*path
+#                                          + 0.05/0.35*semester
+#   both scores         : 0.8*relevance + 0.15*serendipity + 0.05*popularity
+_RELEVANCE_TOPIC_WEIGHT = 0.20 / 0.35
+_RELEVANCE_PATH_WEIGHT = 0.10 / 0.35
+_RELEVANCE_SEMESTER_WEIGHT = 0.05 / 0.35
+_SERENDIPITY_WEIGHT = 0.15
+_POPULARITY_WEIGHT = 0.05
 
 
 def recommend_groups_for_student(
@@ -82,7 +43,8 @@ def recommend_groups_for_student(
 ) -> list[Recommendation]:
     student = dataset.students[student_id]
     joined_group_ids = set(student.joined_group_ids)
-    peer_ids = _peer_set(dataset, student_id)
+    peer_ids = peer_set(dataset, student_id)
+    largest_group = max_group_size(dataset)
 
     recommendations: list[Recommendation] = []
 
@@ -90,21 +52,27 @@ def recommend_groups_for_student(
         if group_id in joined_group_ids or not group.is_student_made:
             continue
 
-        topic_similarity = _cosine_similarity(
+        topic_similarity = sparse_cosine_similarity(
             hin.student_topic_weights.get(student_id, {}),
             hin.group_topic_weights.get(group_id, {}),
         )
-        study_path_affinity = _study_path_affinity(dataset, student_id, group_id)
-        semester_proximity = _semester_proximity(dataset, student_id, group_id)
-        popularity = _popularity(dataset, group_id)
-        member_similarity = _jaccard_similarity(peer_ids, set(group.member_ids))
+        path_affinity = study_path_affinity(
+            dataset, student_id, group_id, empty_group_uses_primary_path=False
+        )
+        sem_proximity = semester_proximity(dataset, student_id, group_id)
+        group_popularity = popularity(dataset, group_id, largest_group)
+        member_similarity = jaccard_similarity(peer_ids, set(group.member_ids))
         serendipity = topic_similarity * (1.0 - member_similarity)
         relevance = (
-            0.6 * topic_similarity
-            + 0.25 * study_path_affinity
-            + 0.15 * semester_proximity
+            _RELEVANCE_TOPIC_WEIGHT * topic_similarity
+            + _RELEVANCE_PATH_WEIGHT * path_affinity
+            + _RELEVANCE_SEMESTER_WEIGHT * sem_proximity
         )
-        score = (lambda_relevance * relevance) + ((1.0 - lambda_relevance) * serendipity) + (0.1 * popularity)
+        score = (
+            (lambda_relevance * relevance)
+            + (_SERENDIPITY_WEIGHT * serendipity)
+            + (_POPULARITY_WEIGHT * group_popularity)
+        )
 
         recommendations.append(
             Recommendation(
@@ -114,9 +82,9 @@ def recommend_groups_for_student(
                 score=score,
                 breakdown=RecommendationBreakdown(
                     topic_similarity=topic_similarity,
-                    study_path_affinity=study_path_affinity,
-                    semester_proximity=semester_proximity,
-                    popularity=popularity,
+                    study_path_affinity=path_affinity,
+                    semester_proximity=sem_proximity,
+                    popularity=group_popularity,
                     serendipity=serendipity,
                     relevance=relevance,
                 ),

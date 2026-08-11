@@ -63,6 +63,36 @@ import android.widget.Toast
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.platform.LocalContext
 
+/**
+ * Resolves DM partner display names at most once per process. Without this,
+ * every DM row in the room list issued its own Firestore user query on each
+ * (re)composition -- an N+1 lookup pattern. Failures are not cached so a
+ * transient error is retried the next time the row appears.
+ */
+private object DmTitleCache {
+    private val cache = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    suspend fun displayNameFor(email: String): String? {
+        cache[email]?.let { return it.ifEmpty { null } }
+        return try {
+            val qs = Injection.instance()
+                .collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .await()
+            val user = qs.documents.firstOrNull()?.toUserOrNull()
+            val full = listOfNotNull(user?.firstName?.trim(), user?.lastName?.trim())
+                .joinToString(" ")
+                .trim()
+            cache[email] = full
+            full.ifEmpty { null }
+        } catch (_: Exception) {
+            null
+        }
+    }
+}
+
 enum class SortOption {
     NAME_ASC,
     NAME_DESC,
@@ -607,24 +637,10 @@ fun RoomItem(
                 // Title: for DMs, show other user's name (fallback to email), else room.name
                 var titleText by remember { mutableStateOf(room.name) }
                 LaunchedEffect(room.id, dmOther, room.isDirect) {
-                    if (room.isDirect && dmOther != null) {
-                        try {
-                            val firestore = Injection.instance()
-                            val qs = firestore.collection("users")
-                                .whereEqualTo("email", dmOther)
-                                .limit(1)
-                                .get()
-                                .await()
-                            val user = qs.documents.firstOrNull()?.toUserOrNull()
-                            val full = listOfNotNull(user?.firstName?.trim(), user?.lastName?.trim())
-                                .joinToString(" ")
-                                .trim()
-                            titleText = if (full.isNotEmpty()) full else dmOther
-                        } catch (_: Exception) {
-                            titleText = dmOther ?: room.name
-                        }
+                    titleText = if (room.isDirect && dmOther != null) {
+                        DmTitleCache.displayNameFor(dmOther) ?: dmOther
                     } else {
-                        titleText = room.name
+                        room.name
                     }
                 }
 
@@ -834,9 +850,20 @@ private fun Room.matchesAcademicProfile(user: User?): Boolean {
     val studyPath = user?.studyPath?.trim().orEmpty()
     val semester = user?.semester ?: 0L
 
-    return isAcademicRoom() &&
-            studyPath.isNotBlank() &&
-            semester > 0 &&
-            studyPathCatalogKey(academicStudyPath) == studyPathCatalogKey(studyPath) &&
-            academicSemester == semester
+    if (!isAcademicRoom() || studyPath.isBlank() || semester <= 0) return false
+    if (studyPathCatalogKey(academicStudyPath) != studyPathCatalogKey(studyPath)) return false
+
+    // Exactly two academic rooms are shown per student:
+    //   STUDY_PATH -> the whole-degree room, shared across every semester
+    //                 (academicSemester == 0, so it must not be gated by semester), and
+    //   SEMESTER   -> the room for the student's own semester.
+    // Legacy lecture rooms from older app versions are no longer surfaced;
+    // unknown/blank kinds fall back to the original semester-match behaviour so
+    // no legitimately-kinded room regresses.
+    return when (academicRoomKind) {
+        "STUDY_PATH" -> true
+        "SEMESTER" -> academicSemester == semester
+        "LECTURE" -> false
+        else -> academicSemester == semester
+    }
 }

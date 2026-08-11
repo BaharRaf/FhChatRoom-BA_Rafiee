@@ -102,6 +102,24 @@ def build_hin(dataset: SyntheticDataset, max_topics: int = 50) -> HINGraph:
         for group_id in student.joined_group_ids:
             edges.append(HINEdge(source=student.id, target=group_id, relation="MEMBER_OF"))
 
+    # FRIENDS_WITH: the client's accepted-friendship graph, emitted as an
+    # undirected student-student relation (both directions, de-duplicated by
+    # the ordered pair). Unlike every other relation this one connects two
+    # students directly, so it is the only path by which a student with no
+    # memberships and no messages can be distinguished from a cohort peer.
+    seen_friendships: set[tuple[str, str]] = set()
+    for student in dataset.students.values():
+        for friend_id in student.friend_ids:
+            if friend_id not in dataset.students or friend_id == student.id:
+                continue
+            pair = (student.id, friend_id)
+            if pair in seen_friendships:
+                continue
+            seen_friendships.add(pair)
+            edges.append(
+                HINEdge(source=student.id, target=friend_id, relation="FRIENDS_WITH")
+            )
+
     for message in dataset.messages:
         nodes[message.id] = HINNode(
             id=message.id,

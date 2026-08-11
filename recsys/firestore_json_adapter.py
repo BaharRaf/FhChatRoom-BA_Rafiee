@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -169,7 +170,21 @@ def dataset_from_firestore_json(
             semester_bucket=semester_bucket_for(semester),
             preferred_topics=list(user.get("preferredTopics") or _default_topics_for_study_path(study_path)),
             joined_group_ids=[],
+            # Friendships are pseudonymised exactly like every other student
+            # reference; only accepted friendships appear in the user document.
+            friend_ids=[
+                mapped
+                for mapped in (
+                    student_id_mapper.internal_id_for(str(friend))
+                    for friend in (user.get("friends") or [])
+                    if str(friend).strip()
+                )
+                if mapped
+            ],
         )
+
+    academic_room_count = 0
+    suspected_academic_ids: list[str] = []
 
     # Privacy boundary: private rooms and direct messages must never enter
     # the recommendation graph -- neither as recommendable items nor as
@@ -257,6 +272,16 @@ def dataset_from_firestore_json(
             is_student_made=not is_academic,
         )
 
+        if is_academic:
+            academic_room_count += 1
+        elif category.strip().lower() in {"academic", "lecture"}:
+            # The room looks academic by category but carries none of the
+            # markers the client writes (Room.kt: templateRoom, ownerEmail
+            # == "system", academicRoomKind). Treating it as student-made
+            # would make auto-assigned scaffolding recommendable, breaking
+            # the invariant that academic rooms are never targets.
+            suspected_academic_ids.append(group_id)
+
         for member_id in member_ids:
             if member_id not in students:
                 students[member_id] = Student(
@@ -282,6 +307,29 @@ def dataset_from_firestore_json(
         for group in groups.values()
         for topic in group.topic_tags
     }
+
+    # Preflight diagnostic. Academic rooms are detected only from the markers
+    # the client writes; an export that lacks them (schema drift, a partial
+    # export, rooms predating the academic-room feature) silently turns
+    # auto-assigned scaffolding into recommendable groups. That violates a
+    # core invariant while every downstream check still passes, so say so
+    # loudly at ingestion rather than discovering it in the recommendations.
+    if suspected_academic_ids:
+        warnings.warn(
+            f"{len(suspected_academic_ids)} room(s) have an academic category but none of the "
+            "markers the client writes (templateRoom / ownerEmail=='system' / academicRoomKind); "
+            "they will be treated as student-made and become recommendable: "
+            f"{suspected_academic_ids[:5]}",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    if groups and academic_room_count == 0:
+        warnings.warn(
+            "No academic rooms were recognised in this export. If the platform does assign "
+            "academic rooms, the markers are missing and scaffolding will be recommended.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
 
     return SyntheticDataset(
         config=DatasetConfig(

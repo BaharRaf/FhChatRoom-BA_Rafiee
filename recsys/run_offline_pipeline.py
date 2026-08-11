@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import sys
 from copy import deepcopy
 from pathlib import Path
 
@@ -46,7 +48,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--messages-per-day", type=int, default=30)
     parser.add_argument("--days", type=int, default=14)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--epochs", type=int, default=120)
+    parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--learning-rate", type=float, default=0.05)
     parser.add_argument("--graphsage-epochs", type=int)
     parser.add_argument("--graphsage-learning-rate", type=float)
@@ -77,7 +79,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--users")
     parser.add_argument("--rooms")
     parser.add_argument("--messages")
-    parser.add_argument("--pseudonym-salt", default=DEFAULT_PSEUDONYM_SALT)
+    # The salt may come from the environment so real deployments never put it
+    # on a command line; the built-in default is for local research runs only.
+    parser.add_argument(
+        "--pseudonym-salt",
+        default=os.environ.get("FHCHATROOM_SALT", DEFAULT_PSEUDONYM_SALT),
+    )
     parser.add_argument(
         "--no-pseudonymize-students",
         action="store_true",
@@ -91,6 +98,12 @@ def _load_dataset(args: argparse.Namespace) -> SyntheticDataset:
     if args.mode == "json":
         if not args.users or not args.rooms or not args.messages:
             raise SystemExit("--users, --rooms, and --messages are required in json mode")
+        if not args.no_pseudonymize_students and args.pseudonym_salt == DEFAULT_PSEUDONYM_SALT:
+            print(
+                "WARNING: pseudonymising a real export with the built-in default salt; "
+                "supply --pseudonym-salt or set FHCHATROOM_SALT for production use.",
+                file=sys.stderr,
+            )
         return dataset_from_firestore_json(
             users_path=args.users,
             rooms_path=args.rooms,
@@ -119,7 +132,13 @@ def _graphsage_config(args: argparse.Namespace) -> GraphSAGEConfig:
     )
 
 
-def _preflight_quality_report(args: argparse.Namespace, dataset: SyntheticDataset) -> dict[str, object]:
+def _build_split_artifacts(args: argparse.Namespace, dataset: SyntheticDataset) -> dict[str, object]:
+    """Builds the evaluation split, HIN, and training prep exactly once.
+
+    The preflight quality gate and the evaluation report share these
+    artifacts; both previously derived identical copies independently, so the
+    only effect of sharing is that the work is not repeated.
+    """
     if args.evaluation_protocol == "temporal-onboarding":
         train_dataset, held_out, warm_student_ids, cold_student_ids = build_temporal_onboarding_targets(
             dataset=deepcopy(dataset),
@@ -127,27 +146,39 @@ def _preflight_quality_report(args: argparse.Namespace, dataset: SyntheticDatase
             min_cold_start_users=args.min_temporal_cold_users,
             seed=args.seed,
         )
-    else:
-        train_dataset, held_out = build_leave_one_out_targets(deepcopy(dataset))
-        hin_for_split = build_hin(train_dataset, max_topics=args.topics)
-        prep_for_split = prepare_graphsage_training_data(
+        hin = build_hin(train_dataset, max_topics=args.topics)
+        prep = prepare_graphsage_training_data(
             dataset=train_dataset,
-            hin=hin_for_split,
+            hin=hin,
             config=_graphsage_config(args),
         )
-        warm_student_ids = prep_for_split.warm_student_ids
-        cold_student_ids = prep_for_split.cold_student_ids
+    else:
+        train_dataset, held_out = build_leave_one_out_targets(deepcopy(dataset))
+        hin = build_hin(train_dataset, max_topics=args.topics)
+        prep = prepare_graphsage_training_data(
+            dataset=train_dataset,
+            hin=hin,
+            config=_graphsage_config(args),
+        )
+        warm_student_ids = prep.warm_student_ids
+        cold_student_ids = prep.cold_student_ids
 
-    hin = build_hin(train_dataset, max_topics=args.topics)
-    prep = prepare_graphsage_training_data(
-        dataset=train_dataset,
-        hin=hin,
-        config=_graphsage_config(args),
-    )
     return {
-        "warmStudents": len(warm_student_ids),
-        "coldStudents": len(cold_student_ids),
-        "heldOutUsers": len(held_out),
+        "train_dataset": train_dataset,
+        "held_out": held_out,
+        "warm_student_ids": warm_student_ids,
+        "cold_student_ids": cold_student_ids,
+        "hin": hin,
+        "prep": prep,
+    }
+
+
+def _preflight_quality_report(artifacts: dict[str, object]) -> dict[str, object]:
+    prep = artifacts["prep"]
+    return {
+        "warmStudents": len(artifacts["warm_student_ids"]),
+        "coldStudents": len(artifacts["cold_student_ids"]),
+        "heldOutUsers": len(artifacts["held_out"]),
         "positivePairs": len(prep.positive_pairs),
         "trainingTriplets": len(prep.training_triplets),
     }
@@ -215,20 +246,13 @@ def _train_lightgcn(args: argparse.Namespace, prep):
     )
 
 
-def _evaluation_report(args: argparse.Namespace, dataset: SyntheticDataset) -> dict[str, object]:
-    if args.evaluation_protocol == "temporal-onboarding":
-        train_dataset, held_out, warm_student_ids, cold_student_ids = build_temporal_onboarding_targets(
-            dataset=deepcopy(dataset),
-            cold_start_ratio=args.cold_start_ratio,
-            min_cold_start_users=args.min_temporal_cold_users,
-            seed=args.seed,
-        )
-    else:
-        train_dataset, held_out = build_leave_one_out_targets(deepcopy(dataset))
-        warm_student_ids = []
-        cold_student_ids = []
-
-    hin = build_hin(train_dataset, max_topics=args.topics)
+def _evaluation_report(args: argparse.Namespace, artifacts: dict[str, object]) -> dict[str, object]:
+    train_dataset = artifacts["train_dataset"]
+    held_out = artifacts["held_out"]
+    warm_student_ids = artifacts["warm_student_ids"]
+    cold_student_ids = artifacts["cold_student_ids"]
+    hin = artifacts["hin"]
+    prep = artifacts["prep"]
 
     baseline_ranked = {
         student_id: [item["groupId"] for item in ranked]
@@ -239,10 +263,16 @@ def _evaluation_report(args: argparse.Namespace, dataset: SyntheticDataset) -> d
         ).items()
     }
 
-    prep, graphsage_result = _train_graphsage(args, train_dataset, hin)
-    if args.evaluation_protocol == "leave-one-out":
-        warm_student_ids = prep.warm_student_ids
-        cold_student_ids = prep.cold_student_ids
+    graphsage_result = train_graphsage_embeddings(
+        prep=prep,
+        config=GraphSAGETrainConfig(
+            hidden_dim=args.hidden_dim,
+            embedding_dim=args.embedding_dim,
+            learning_rate=args.graphsage_learning_rate or args.learning_rate,
+            epochs=args.graphsage_epochs or args.epochs,
+            seed=args.seed,
+        ),
+    )
 
     graphsage_ranked = {
         student_id: [item["groupId"] for item in ranked]
@@ -368,7 +398,8 @@ def main() -> None:
     output_dir = Path(args.output_dir)
 
     dataset = _load_dataset(args)
-    quality_report = _preflight_quality_report(args, dataset)
+    split_artifacts = _build_split_artifacts(args, dataset)
+    quality_report = _preflight_quality_report(split_artifacts)
     _validate_quality(args, quality_report)
 
     hin = build_hin(dataset=dataset, max_topics=args.topics)
@@ -406,7 +437,7 @@ def main() -> None:
         top_k=args.top_k,
     )
 
-    evaluation_report = _evaluation_report(args, dataset)
+    evaluation_report = _evaluation_report(args, split_artifacts)
     manifest = {
         "mode": args.mode,
         "evaluationProtocol": args.evaluation_protocol,

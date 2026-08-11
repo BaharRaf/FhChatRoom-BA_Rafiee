@@ -29,6 +29,7 @@ from recsys.extra_baselines import build_node2vec_recommendations
 from recsys.extra_baselines import build_popularity_recommendations
 from recsys.extra_baselines import build_random_recommendations
 from recsys.extra_baselines import train_node2vec_embeddings
+from recsys.baselines import build_detailed_recommendations
 from recsys.firestore_json_adapter import dataset_from_firestore_json
 from recsys.graphsage_prep import GraphSAGEConfig
 from recsys.graphsage_prep import prepare_graphsage_training_data
@@ -578,5 +579,34 @@ def test_score_recomposes_from_breakdown(dataset, trained):
             expected = 0.8 * b["relevance"] + 0.15 * b["serendipity"] + 0.05 * b["popularity"]
             # emitted values are rounded to 6 decimals, so allow that much slack
             assert abs(item["score"] - expected) < 1e-5
+            checked += 1
+    assert checked > 0
+
+
+def test_content_based_is_the_feature_only_ablation_of_the_graphsage_blend(dataset):
+    """Content-Based must be the GraphSAGE blend minus the embedding term.
+
+    The thesis presents Content-Based as the feature-only ablation that
+    isolates the learned embedding's contribution. That only holds if both
+    rankers share the outer blend (0.8/0.15/0.05) and if Content-Based's
+    relevance is the GraphSAGE relevance with the 0.65 embedding term dropped
+    and the remaining 0.20/0.10/0.05 weights renormalised over 0.35.
+    """
+    hin = build_hin(dataset, max_topics=16)
+    detailed = build_detailed_recommendations(dataset, hin, top_k=5)
+    checked = 0
+    for items in detailed.values():
+        for item in items:
+            b = item["breakdown"]
+            expected_relevance = (
+                (0.20 / 0.35) * b["topicSimilarity"]
+                + (0.10 / 0.35) * b["studyPathAffinity"]
+                + (0.05 / 0.35) * b["semesterProximity"]
+            )
+            assert abs(b["relevance"] - expected_relevance) < 1e-5
+            expected_score = (
+                0.8 * b["relevance"] + 0.15 * b["serendipity"] + 0.05 * b["popularity"]
+            )
+            assert abs(item["score"] - expected_score) < 1e-5
             checked += 1
     assert checked > 0
