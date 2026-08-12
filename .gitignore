@@ -103,3 +103,12 @@ recsys_experiments/*/figures/
 recsys_experiments/*/embeddings*.json
 recsys_experiments/*.log
 !recsys_experiments/*/results.json
+
+# Internal working documents — not part of the submitted artefact
+docs/ba2/council-audit-*.md
+docs/ba2/TEACH_ME_BA2.md
+docs/ba2/STUDY_GUIDE.md
+docs/ba2/THESIS_FEATURE_SELF_TEST.md
+docs/ba2/SUPERVISOR_REVIEW.md
+docs/*HANDOFF*.md
+docs/ba2/*HANDOFF*.md
