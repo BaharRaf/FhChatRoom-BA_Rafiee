@@ -122,3 +122,12 @@ docs/ba2/hcw/*.out
 docs/ba2/hcw/*.toc
 docs/ba2/hcw/*.run.xml
 docs/ba2/hcw/*.bcf
+
+# Thesis documents — kept locally, not published with the code
+docs/ba2/hcw/main.pdf
+docs/ba2/defence/presentation.pdf
+# Licensed fonts (Arial) must not be redistributed
+docs/ba2/hcw/fonts/
+# Figures duplicated from docs/ba2/figures
+recsys_experiments/figures/
+FhChatRoom.zip
