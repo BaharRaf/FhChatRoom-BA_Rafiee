@@ -112,3 +112,13 @@ docs/ba2/THESIS_FEATURE_SELF_TEST.md
 docs/ba2/SUPERVISOR_REVIEW.md
 docs/*HANDOFF*.md
 docs/ba2/*HANDOFF*.md
+
+# LaTeX build artefacts
+docs/ba2/hcw/*.blg
+docs/ba2/hcw/*.bbl
+docs/ba2/hcw/*.aux
+docs/ba2/hcw/*.log
+docs/ba2/hcw/*.out
+docs/ba2/hcw/*.toc
+docs/ba2/hcw/*.run.xml
+docs/ba2/hcw/*.bcf
