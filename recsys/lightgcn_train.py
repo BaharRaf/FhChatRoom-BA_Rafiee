@@ -4,10 +4,12 @@ import math
 import time
 from dataclasses import asdict
 from dataclasses import dataclass
+from types import SimpleNamespace
 
 import numpy as np
 
 from recsys.graphsage_prep import GraphSAGEPreparedData
+from recsys.graphsage_train import build_graphsage_recommendations
 from recsys.models import SyntheticDataset
 from recsys.scoring import max_group_size
 from recsys.scoring import popularity
@@ -318,6 +320,38 @@ def build_lightgcn_recommendations(
         recommendations[student_id] = ranked[:top_k]
 
     return recommendations
+
+
+def build_lightgcn_blended_recommendations(
+    dataset: SyntheticDataset,
+    hin,
+    training_result: LightGCNTrainingResult,
+    top_k: int = 10,
+) -> dict[str, list[dict[str, object]]]:
+    """Ranks LightGCN's embeddings through the GraphSAGE scoring blend.
+
+    H1 as measured by the main protocol compares the *full GraphSAGE system*
+    -- learned embeddings inside the hybrid blend -- against LightGCN's native
+    inner-product ranking. Any difference is therefore attributable to the
+    blend as much as to the architecture, which is the residual confound named
+    in the threats-to-validity discussion. This variant removes it: LightGCN's
+    embeddings are substituted into exactly the same scoring function, through
+    the same code path, so the two conditions differ only in how the
+    embeddings were learned.
+
+    The blend consumes one embedding lookup keyed by node id, whereas LightGCN
+    keeps students and groups in separate maps; merging them is safe because
+    student and group identifiers are disjoint.
+    """
+    merged: dict[str, list[float]] = dict(training_result.student_embeddings)
+    overlap = merged.keys() & training_result.group_embeddings.keys()
+    if overlap:
+        raise ValueError(f"student and group ids overlap: {sorted(overlap)[:5]}")
+    merged.update(training_result.group_embeddings)
+
+    # build_graphsage_recommendations reads only `.embeddings` off the result.
+    proxy = SimpleNamespace(embeddings=merged)
+    return build_graphsage_recommendations(dataset, hin, proxy, top_k=top_k)
 
 
 def build_lightgcn_firestore_payloads(

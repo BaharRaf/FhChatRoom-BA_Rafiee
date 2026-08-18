@@ -1,0 +1,178 @@
+{
+  "seeds": {
+    "42": {
+      "coldUsers": 500,
+      "coldNdcg": {
+        "graphsage": 0.146126,
+        "lightgcn_native": 0.133988,
+        "lightgcn_blended": 0.162525
+      },
+      "tests": {
+        "H1_preregistered_graphsage_vs_lightgcn_native": {
+          "metric": "ndcg",
+          "numUsers": 500,
+          "meanA": 0.146126,
+          "meanB": 0.133988,
+          "meanDifference": 0.012139,
+          "alpha": 0.05,
+          "numHypotheses": 3,
+          "alphaBonferroniAdjusted": 0.016667,
+          "tStatistic": 1.336814,
+          "tPValue": 0.18189261411673224,
+          "wilcoxonStatistic": 27611.5,
+          "wilcoxonPValue": 0.30464637885332857,
+          "cohensD": 0.059784,
+          "significant": false
+        },
+        "architecture_graphsage_vs_lightgcn_blended": {
+          "metric": "ndcg",
+          "numUsers": 500,
+          "meanA": 0.146126,
+          "meanB": 0.162525,
+          "meanDifference": -0.016399,
+          "alpha": 0.05,
+          "numHypotheses": 3,
+          "alphaBonferroniAdjusted": 0.016667,
+          "tStatistic": -2.300603,
+          "tPValue": 0.021825623500885953,
+          "wilcoxonStatistic": 22324.0,
+          "wilcoxonPValue": 0.0278304914893081,
+          "cohensD": -0.102886,
+          "significant": false
+        },
+        "blend_value_lightgcn_blended_vs_native": {
+          "metric": "ndcg",
+          "numUsers": 500,
+          "meanA": 0.162525,
+          "meanB": 0.133988,
+          "meanDifference": 0.028538,
+          "alpha": 0.05,
+          "numHypotheses": 3,
+          "alphaBonferroniAdjusted": 0.016667,
+          "tStatistic": 4.38299,
+          "tPValue": 1.4281007754294447e-05,
+          "wilcoxonStatistic": 15362.0,
+          "wilcoxonPValue": 2.107001555131032e-05,
+          "cohensD": 0.196013,
+          "significant": true
+        }
+      }
+    },
+    "43": {
+      "coldUsers": 500,
+      "coldNdcg": {
+        "graphsage": 0.175588,
+        "lightgcn_native": 0.123099,
+        "lightgcn_blended": 0.163508
+      },
+      "tests": {
+        "H1_preregistered_graphsage_vs_lightgcn_native": {
+          "metric": "ndcg",
+          "numUsers": 500,
+          "meanA": 0.175588,
+          "meanB": 0.123099,
+          "meanDifference": 0.052489,
+          "alpha": 0.05,
+          "numHypotheses": 3,
+          "alphaBonferroniAdjusted": 0.016667,
+          "tStatistic": 5.318794,
+          "tPValue": 1.579649028389984e-07,
+          "wilcoxonStatistic": 20983.0,
+          "wilcoxonPValue": 5.895306499906203e-07,
+          "cohensD": 0.237864,
+          "significant": true
+        },
+        "architecture_graphsage_vs_lightgcn_blended": {
+          "metric": "ndcg",
+          "numUsers": 500,
+          "meanA": 0.175588,
+          "meanB": 0.163508,
+          "meanDifference": 0.01208,
+          "alpha": 0.05,
+          "numHypotheses": 3,
+          "alphaBonferroniAdjusted": 0.016667,
+          "tStatistic": 1.847241,
+          "tPValue": 0.06530392932664794,
+          "wilcoxonStatistic": 24691.5,
+          "wilcoxonPValue": 0.15573019775941907,
+          "cohensD": 0.082611,
+          "significant": false
+        },
+        "blend_value_lightgcn_blended_vs_native": {
+          "metric": "ndcg",
+          "numUsers": 500,
+          "meanA": 0.163508,
+          "meanB": 0.123099,
+          "meanDifference": 0.040408,
+          "alpha": 0.05,
+          "numHypotheses": 3,
+          "alphaBonferroniAdjusted": 0.016667,
+          "tStatistic": 5.993149,
+          "tPValue": 3.947422830470125e-09,
+          "wilcoxonStatistic": 12751.5,
+          "wilcoxonPValue": 1.2305651523454752e-08,
+          "cohensD": 0.268022,
+          "significant": true
+        }
+      }
+    },
+    "44": {
+      "coldUsers": 500,
+      "coldNdcg": {
+        "graphsage": 0.162791,
+        "lightgcn_native": 0.134195,
+        "lightgcn_blended": 0.153467
+      },
+      "tests": {
+        "H1_preregistered_graphsage_vs_lightgcn_native": {
+          "metric": "ndcg",
+          "numUsers": 500,
+          "meanA": 0.162791,
+          "meanB": 0.134195,
+          "meanDifference": 0.028595,
+          "alpha": 0.05,
+          "numHypotheses": 3,
+          "alphaBonferroniAdjusted": 0.016667,
+          "tStatistic": 2.994814,
+          "tPValue": 0.002882531219853813,
+          "wilcoxonStatistic": 25170.0,
+          "wilcoxonPValue": 0.003433567613461693,
+          "cohensD": 0.133932,
+          "significant": true
+        },
+        "architecture_graphsage_vs_lightgcn_blended": {
+          "metric": "ndcg",
+          "numUsers": 500,
+          "meanA": 0.162791,
+          "meanB": 0.153467,
+          "meanDifference": 0.009324,
+          "alpha": 0.05,
+          "numHypotheses": 3,
+          "alphaBonferroniAdjusted": 0.016667,
+          "tStatistic": 1.294716,
+          "tPValue": 0.196017151822638,
+          "wilcoxonStatistic": 23639.5,
+          "wilcoxonPValue": 0.3878782198110805,
+          "cohensD": 0.057901,
+          "significant": false
+        },
+        "blend_value_lightgcn_blended_vs_native": {
+          "metric": "ndcg",
+          "numUsers": 500,
+          "meanA": 0.153467,
+          "meanB": 0.134195,
+          "meanDifference": 0.019272,
+          "alpha": 0.05,
+          "numHypotheses": 3,
+          "alphaBonferroniAdjusted": 0.016667,
+          "tStatistic": 3.065516,
+          "tPValue": 0.0022906826410370095,
+          "wilcoxonStatistic": 17565.0,
+          "wilcoxonPValue": 0.0027508832568318873,
+          "cohensD": 0.137094,
+          "significant": true
+        }
+      }
+    }
+  }
+}

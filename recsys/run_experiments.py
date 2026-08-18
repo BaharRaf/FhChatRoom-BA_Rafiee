@@ -85,10 +85,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--messages-per-day", type=int, default=150)
     parser.add_argument("--days", type=int, default=14)
     parser.add_argument("--seed", type=int, default=42)
-    # Validation-selected via recsys.run_epoch_selection: quality is flat for
-    # <=20 epochs and declines beyond ~25 (overfitting of the contrastive
-    # objective on sparse memberships).
-    parser.add_argument("--epochs", type=int, default=20)
+    # Validation-selected via recsys.run_graphsage_lr_selection, jointly with
+    # the learning rate; see GraphSAGETrainConfig for why the previous
+    # 20-epoch default did not survive the gradient correction.
+    parser.add_argument("--epochs", type=int, default=GraphSAGETrainConfig.epochs)
+    parser.add_argument(
+        "--learning-rate",
+        type=float,
+        default=GraphSAGETrainConfig.learning_rate,
+        help="Validation-selected GraphSAGE learning rate (recsys.run_graphsage_lr_selection).",
+    )
     parser.add_argument(
         "--lightgcn-epochs",
         type=int,
@@ -180,6 +186,7 @@ def _train_graphsage(
             hidden_dim=args.hidden_dim,
             embedding_dim=args.embedding_dim,
             epochs=args.epochs,
+            learning_rate=args.learning_rate,
             dp=dp,
             dp_gradient=dp_gradient,
             seed=args.seed,
@@ -409,6 +416,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             "coldStartRatio": args.cold_start_ratio,
             "topK": args.top_k,
             "epochs": args.epochs,
+            "learningRate": args.learning_rate,
             "embeddingDim": args.embedding_dim,
             "seed": args.seed,
         },

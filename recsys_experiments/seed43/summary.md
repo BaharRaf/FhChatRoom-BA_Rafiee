@@ -1,6 +1,6 @@
 # BA2 Experiment Summary
 
-Total runtime: 131.2s
+Total runtime: 113.9s
 
 ## Segments
 - Warm students: 1500
@@ -15,15 +15,15 @@ Total runtime: 131.2s
 | Content-Based | 0.1348 / 0.0404 / 0.2693 | 0.1208 / 0.0268 / 0.2680 | 0.1768 / 0.0812 / 0.2732 | 1.464 |
 | Node2Vec | 0.1173 / 0.0355 / 0.2321 | 0.1034 / 0.0227 / 0.2267 | 0.1589 / 0.0738 / 0.2483 | 1.537 |
 | LightGCN | 0.1040 / 0.0286 / 0.1966 | 0.0977 / 0.0200 / 0.2000 | 0.1231 / 0.0546 / 0.1865 | 1.260 |
-| GraphSAGE | 0.1113 / 0.0331 / 0.2191 | 0.0980 / 0.0216 / 0.2160 | 0.1512 / 0.0676 / 0.2283 | 1.543 |
+| GraphSAGE | 0.1271 / 0.0379 / 0.2485 | 0.1109 / 0.0242 / 0.2420 | 0.1756 / 0.0788 / 0.2682 | 1.583 |
 
 ## Hypothesis tests
-- **H1_graphsage_vs_lightgcn_cold_ndcg**: mean diff = 0.028144, t p-value = 0.004968036638922483, Wilcoxon p-value = 0.007166447399871549, significant at Bonferroni-adjusted alpha: True
-- **H2_lightgcn_vs_graphsage_warm_recall**: mean diff = -0.016, t p-value = 0.22556071917595114, Wilcoxon p-value = 0.22544231699451311, significant at Bonferroni-adjusted alpha: False
-- **supplementary_graphsage_vs_content_cold_ndcg**: mean diff = -0.025586, t p-value = 2.881056571797218e-05, Wilcoxon p-value = 3.6349839653857904e-05, significant at Bonferroni-adjusted alpha: True
+- **H1_graphsage_vs_lightgcn_cold_ndcg**: mean diff = 0.052489, t p-value = 1.579649028389984e-07, Wilcoxon p-value = 5.895306499906203e-07, significant at Bonferroni-adjusted alpha: True
+- **H2_lightgcn_vs_graphsage_warm_recall**: mean diff = -0.042, t p-value = 0.0011947042646334863, Wilcoxon p-value = 0.0012117805361219634, significant at Bonferroni-adjusted alpha: True
+- **supplementary_graphsage_vs_content_cold_ndcg**: mean diff = -0.001241, t p-value = 0.7461026414566608, Wilcoxon p-value = 0.9798610668607133, significant at Bonferroni-adjusted alpha: False
 
 ## Fairness (Kruskal-Wallis)
-- **graphsage_all**: H = 20.905092, p = 0.00033068843018630226, significant disparity: True
-- **graphsage_cold**: H = 15.230449, p = 0.004246358593272414, significant disparity: True
+- **graphsage_all**: H = 2.239566, p = 0.6917923892552407, significant disparity: False
+- **graphsage_cold**: H = 1.749635, p = 0.781682799301512, significant disparity: False
 - **lightgcn_all**: H = 11.260047, p = 0.023791779787814004, significant disparity: True
 

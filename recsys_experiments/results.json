@@ -10,7 +10,8 @@
     "split": "temporal-onboarding",
     "coldStartRatio": 0.25,
     "topK": 10,
-    "epochs": 20,
+    "epochs": 300,
+    "learningRate": 0.1,
     "embeddingDim": 16,
     "seed": 42
   },
@@ -155,30 +156,30 @@
     },
     "graphsage": {
       "all": {
-        "precisionAtK": 0.03385,
-        "recallAtK": 0.227042,
-        "ndcgAtK": 0.118632,
-        "hitRateAtK": 0.3035,
-        "mrr": 0.102649,
+        "precisionAtK": 0.0332,
+        "recallAtK": 0.217375,
+        "ndcgAtK": 0.11232,
+        "hitRateAtK": 0.2945,
+        "mrr": 0.096008,
         "evaluatedUsers": 2000
       },
       "warm": {
-        "precisionAtK": 0.022933,
-        "recallAtK": 0.229333,
-        "ndcgAtK": 0.110149,
-        "hitRateAtK": 0.229333,
-        "mrr": 0.074805,
+        "precisionAtK": 0.021467,
+        "recallAtK": 0.214667,
+        "ndcgAtK": 0.101051,
+        "hitRateAtK": 0.214667,
+        "mrr": 0.067017,
         "evaluatedUsers": 1500
       },
       "cold": {
-        "precisionAtK": 0.0666,
-        "recallAtK": 0.220167,
-        "ndcgAtK": 0.144081,
-        "hitRateAtK": 0.526,
-        "mrr": 0.186183,
+        "precisionAtK": 0.0684,
+        "recallAtK": 0.2255,
+        "ndcgAtK": 0.146126,
+        "hitRateAtK": 0.534,
+        "mrr": 0.182979,
         "evaluatedUsers": 500
       },
-      "coldStartRobustnessNdcgAtK": 1.308055
+      "coldStartRobustnessNdcgAtK": 1.446065
     },
     "lightgcn": {
       "all": {
@@ -212,49 +213,49 @@
     "H1_graphsage_vs_lightgcn_cold_ndcg": {
       "metric": "ndcg",
       "numUsers": 500,
-      "meanA": 0.144081,
+      "meanA": 0.146126,
       "meanB": 0.133988,
-      "meanDifference": 0.010093,
+      "meanDifference": 0.012139,
       "alpha": 0.05,
       "numHypotheses": 2,
       "alphaBonferroniAdjusted": 0.025,
-      "tStatistic": 1.081023,
-      "tPValue": 0.28020886540423756,
-      "wilcoxonStatistic": 26723.0,
-      "wilcoxonPValue": 0.1817904486079267,
-      "cohensD": 0.048345,
+      "tStatistic": 1.336814,
+      "tPValue": 0.18189261411673224,
+      "wilcoxonStatistic": 27611.5,
+      "wilcoxonPValue": 0.30464637885332857,
+      "cohensD": 0.059784,
       "significant": false
     },
     "H2_lightgcn_vs_graphsage_warm_recall": {
       "metric": "recall",
       "numUsers": 1500,
       "meanA": 0.21,
-      "meanB": 0.229333,
-      "meanDifference": -0.019333,
+      "meanB": 0.214667,
+      "meanDifference": -0.004667,
       "alpha": 0.05,
       "numHypotheses": 2,
       "alphaBonferroniAdjusted": 0.025,
-      "tStatistic": -1.456012,
-      "tPValue": 0.14559883399617232,
-      "wilcoxonStatistic": 36616.0,
-      "wilcoxonPValue": 0.14553966595850681,
-      "cohensD": -0.037594,
+      "tStatistic": -0.351217,
+      "tPValue": 0.725474724028115,
+      "wilcoxonStatistic": 38805.0,
+      "wilcoxonPValue": 0.7253483452862952,
+      "cohensD": -0.009068,
       "significant": false
     },
     "supplementary_graphsage_vs_content_cold_ndcg": {
       "metric": "ndcg",
       "numUsers": 500,
-      "meanA": 0.144081,
+      "meanA": 0.146126,
       "meanB": 0.168117,
-      "meanDifference": -0.024037,
+      "meanDifference": -0.021991,
       "alpha": 0.05,
       "numHypotheses": 2,
       "alphaBonferroniAdjusted": 0.025,
-      "tStatistic": -4.114656,
-      "tPValue": 4.5357644435452375e-05,
-      "wilcoxonStatistic": 14501.5,
-      "wilcoxonPValue": 7.003260569876153e-05,
-      "cohensD": -0.184013,
+      "tStatistic": -4.387147,
+      "tPValue": 1.4020860490815688e-05,
+      "wilcoxonStatistic": 12465.0,
+      "wilcoxonPValue": 3.883719269313491e-06,
+      "cohensD": -0.196199,
       "significant": true
     }
   },
@@ -264,32 +265,32 @@
       "cohorts": {
         "Applied Electronics": {
           "numUsers": 401,
-          "mean": 0.124766,
+          "mean": 0.10543,
           "median": 0.0
         },
         "Biomedical Science": {
           "numUsers": 406,
-          "mean": 0.073957,
+          "mean": 0.089922,
           "median": 0.0
         },
         "Computer Science and Digital Communications": {
           "numUsers": 383,
-          "mean": 0.107702,
+          "mean": 0.121548,
           "median": 0.0
         },
         "Health Care and Nursing": {
           "numUsers": 405,
-          "mean": 0.134966,
+          "mean": 0.112035,
           "median": 0.0
         },
         "Social Work": {
           "numUsers": 405,
-          "mean": 0.151346,
+          "mean": 0.133153,
           "median": 0.0
         }
       },
-      "hStatistic": 44.462746,
-      "pValue": 5.14176581635109e-09,
+      "hStatistic": 13.197275,
+      "pValue": 0.01035103659333345,
       "alpha": 0.05,
       "significantDisparity": true
     },
@@ -298,34 +299,34 @@
       "cohorts": {
         "Applied Electronics": {
           "numUsers": 98,
-          "mean": 0.144328,
-          "median": 0.139056
+          "mean": 0.142709,
+          "median": 0.130127
         },
         "Biomedical Science": {
           "numUsers": 106,
-          "mean": 0.095455,
+          "mean": 0.133113,
           "median": 0.0
         },
         "Computer Science and Digital Communications": {
           "numUsers": 88,
-          "mean": 0.147224,
-          "median": 0.0
+          "mean": 0.149534,
+          "median": 0.056423
         },
         "Health Care and Nursing": {
           "numUsers": 101,
-          "mean": 0.15218,
-          "median": 0.139056
+          "mean": 0.129282,
+          "median": 0.117516
         },
         "Social Work": {
           "numUsers": 107,
-          "mean": 0.181795,
+          "mean": 0.175245,
           "median": 0.156426
         }
       },
-      "hStatistic": 16.831022,
-      "pValue": 0.002084653500020449,
+      "hStatistic": 5.423529,
+      "pValue": 0.24653358059396238,
       "alpha": 0.05,
-      "significantDisparity": true
+      "significantDisparity": false
     },
     "lightgcn_all": {
       "metric": "ndcg",
@@ -381,7 +382,7 @@
     },
     "graphsage": {
       "coverage": 1.0,
-      "diversity": 0.596602
+      "diversity": 0.6346
     },
     "lightgcn": {
       "coverage": 0.94,
@@ -399,6 +400,7 @@
         "sensitivity": 0.094281,
         "relationTiers": {
           "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
           "SENDS": "medium",
           "POSTED_IN": "medium",
           "CONTAINS": "medium",
@@ -415,567 +417,574 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.03445,
-          "recallAtK": 0.233542,
-          "ndcgAtK": 0.12043,
-          "hitRateAtK": 0.31,
-          "mrr": 0.102765,
+          "precisionAtK": 0.03695,
+          "recallAtK": 0.246542,
+          "ndcgAtK": 0.127214,
+          "hitRateAtK": 0.33,
+          "mrr": 0.10891,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111991,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.07408,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.0662,
-          "recallAtK": 0.218167,
-          "ndcgAtK": 0.145748,
-          "hitRateAtK": 0.524,
-          "mrr": 0.188821,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.301428
-      },
-      "seconds": 11.5
-    },
-    {
-      "epsilon": 0.25,
-      "variant": "uniform",
-      "dpConfig": {
-        "epsilon": 0.25,
-        "delta": 1e-05,
-        "degreeBound": 15,
-        "sensitivity": 0.094281,
-        "relationTiers": {
-          "MEMBER_OF": "high",
-          "SENDS": "medium",
-          "POSTED_IN": "medium",
-          "CONTAINS": "medium",
-          "INTERESTED_IN": "low",
-          "RELATED_TO": "low"
-        },
-        "tierNoiseMultipliers": {
-          "high": 1.0,
-          "medium": 1.0,
-          "low": 1.0
-        },
-        "seed": 42,
-        "baseSigma": 1.82709
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.03445,
-          "recallAtK": 0.233542,
-          "ndcgAtK": 0.12043,
-          "hitRateAtK": 0.31,
-          "mrr": 0.102765,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111991,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.07408,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.0662,
-          "recallAtK": 0.218167,
-          "ndcgAtK": 0.145745,
-          "hitRateAtK": 0.524,
-          "mrr": 0.188821,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.301404
-      },
-      "seconds": 11.5
-    },
-    {
-      "epsilon": 0.25,
-      "variant": "gradient",
-      "dpConfig": {
-        "mechanism": "gradient",
-        "epsilon": 0.25,
-        "delta": 1e-05,
-        "clipNorm": 0.05,
-        "totalSteps": 20,
-        "seed": 42,
-        "sigma": 8.666651
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.03395,
-          "recallAtK": 0.227333,
-          "ndcgAtK": 0.118892,
-          "hitRateAtK": 0.306,
-          "mrr": 0.103429,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.0228,
-          "recallAtK": 0.228,
-          "ndcgAtK": 0.108323,
-          "hitRateAtK": 0.228,
-          "mrr": 0.072707,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.0674,
-          "recallAtK": 0.225333,
-          "ndcgAtK": 0.150602,
-          "hitRateAtK": 0.54,
-          "mrr": 0.195594,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.390306
-      },
-      "seconds": 9.5
-    },
-    {
-      "epsilon": 0.5,
-      "variant": "tiered",
-      "dpConfig": {
-        "epsilon": 0.5,
-        "delta": 1e-05,
-        "degreeBound": 15,
-        "sensitivity": 0.094281,
-        "relationTiers": {
-          "MEMBER_OF": "high",
-          "SENDS": "medium",
-          "POSTED_IN": "medium",
-          "CONTAINS": "medium",
-          "INTERESTED_IN": "low",
-          "RELATED_TO": "low"
-        },
-        "tierNoiseMultipliers": {
-          "high": 1.0,
-          "medium": 0.6,
-          "low": 0.3
-        },
-        "seed": 42,
-        "baseSigma": 0.913545
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.03445,
-          "recallAtK": 0.233542,
-          "ndcgAtK": 0.12043,
-          "hitRateAtK": 0.31,
-          "mrr": 0.102765,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111991,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.07408,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.0662,
-          "recallAtK": 0.218167,
-          "ndcgAtK": 0.145748,
-          "hitRateAtK": 0.524,
-          "mrr": 0.188821,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.301428
-      },
-      "seconds": 9.5
-    },
-    {
-      "epsilon": 0.5,
-      "variant": "uniform",
-      "dpConfig": {
-        "epsilon": 0.5,
-        "delta": 1e-05,
-        "degreeBound": 15,
-        "sensitivity": 0.094281,
-        "relationTiers": {
-          "MEMBER_OF": "high",
-          "SENDS": "medium",
-          "POSTED_IN": "medium",
-          "CONTAINS": "medium",
-          "INTERESTED_IN": "low",
-          "RELATED_TO": "low"
-        },
-        "tierNoiseMultipliers": {
-          "high": 1.0,
-          "medium": 1.0,
-          "low": 1.0
-        },
-        "seed": 42,
-        "baseSigma": 0.913545
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.03445,
-          "recallAtK": 0.233542,
-          "ndcgAtK": 0.120427,
-          "hitRateAtK": 0.31,
-          "mrr": 0.102765,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111991,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.07408,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.0662,
-          "recallAtK": 0.218167,
-          "ndcgAtK": 0.145734,
-          "hitRateAtK": 0.524,
-          "mrr": 0.188821,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.301303
-      },
-      "seconds": 9.7
-    },
-    {
-      "epsilon": 0.5,
-      "variant": "gradient",
-      "dpConfig": {
-        "mechanism": "gradient",
-        "epsilon": 0.5,
-        "delta": 1e-05,
-        "clipNorm": 0.05,
-        "totalSteps": 20,
-        "seed": 42,
-        "sigma": 4.333326
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.0347,
-          "recallAtK": 0.229208,
-          "ndcgAtK": 0.120158,
-          "hitRateAtK": 0.311,
-          "mrr": 0.10418,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.0226,
-          "recallAtK": 0.226,
-          "ndcgAtK": 0.108341,
-          "hitRateAtK": 0.226,
-          "mrr": 0.073229,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.071,
-          "recallAtK": 0.238833,
-          "ndcgAtK": 0.155606,
-          "hitRateAtK": 0.566,
-          "mrr": 0.197033,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.436257
-      },
-      "seconds": 9.1
-    },
-    {
-      "epsilon": 1.0,
-      "variant": "tiered",
-      "dpConfig": {
-        "epsilon": 1.0,
-        "delta": 1e-05,
-        "degreeBound": 15,
-        "sensitivity": 0.094281,
-        "relationTiers": {
-          "MEMBER_OF": "high",
-          "SENDS": "medium",
-          "POSTED_IN": "medium",
-          "CONTAINS": "medium",
-          "INTERESTED_IN": "low",
-          "RELATED_TO": "low"
-        },
-        "tierNoiseMultipliers": {
-          "high": 1.0,
-          "medium": 0.6,
-          "low": 0.3
-        },
-        "seed": 42,
-        "baseSigma": 0.456773
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.03445,
-          "recallAtK": 0.233542,
-          "ndcgAtK": 0.120396,
-          "hitRateAtK": 0.31,
-          "mrr": 0.102724,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111945,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.074024,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.0662,
-          "recallAtK": 0.218167,
-          "ndcgAtK": 0.145748,
-          "hitRateAtK": 0.524,
-          "mrr": 0.188821,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.301965
-      },
-      "seconds": 9.7
-    },
-    {
-      "epsilon": 1.0,
-      "variant": "uniform",
-      "dpConfig": {
-        "epsilon": 1.0,
-        "delta": 1e-05,
-        "degreeBound": 15,
-        "sensitivity": 0.094281,
-        "relationTiers": {
-          "MEMBER_OF": "high",
-          "SENDS": "medium",
-          "POSTED_IN": "medium",
-          "CONTAINS": "medium",
-          "INTERESTED_IN": "low",
-          "RELATED_TO": "low"
-        },
-        "tierNoiseMultipliers": {
-          "high": 1.0,
-          "medium": 1.0,
-          "low": 1.0
-        },
-        "seed": 42,
-        "baseSigma": 0.456773
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.03445,
-          "recallAtK": 0.233542,
-          "ndcgAtK": 0.12043,
-          "hitRateAtK": 0.31,
-          "mrr": 0.102765,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111991,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.07408,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.0662,
-          "recallAtK": 0.218167,
-          "ndcgAtK": 0.145748,
-          "hitRateAtK": 0.524,
-          "mrr": 0.188821,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.301428
-      },
-      "seconds": 10.3
-    },
-    {
-      "epsilon": 1.0,
-      "variant": "gradient",
-      "dpConfig": {
-        "mechanism": "gradient",
-        "epsilon": 1.0,
-        "delta": 1e-05,
-        "clipNorm": 0.05,
-        "totalSteps": 20,
-        "seed": 42,
-        "sigma": 2.166663
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.03715,
-          "recallAtK": 0.243958,
-          "ndcgAtK": 0.128124,
-          "hitRateAtK": 0.3295,
-          "mrr": 0.110702,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.115322,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.078376,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.077,
-          "recallAtK": 0.259833,
-          "ndcgAtK": 0.166531,
-          "hitRateAtK": 0.602,
-          "mrr": 0.207679,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.44405
-      },
-      "seconds": 9.1
-    },
-    {
-      "epsilon": 3.0,
-      "variant": "tiered",
-      "dpConfig": {
-        "epsilon": 3.0,
-        "delta": 1e-05,
-        "degreeBound": 15,
-        "sensitivity": 0.094281,
-        "relationTiers": {
-          "MEMBER_OF": "high",
-          "SENDS": "medium",
-          "POSTED_IN": "medium",
-          "CONTAINS": "medium",
-          "INTERESTED_IN": "low",
-          "RELATED_TO": "low"
-        },
-        "tierNoiseMultipliers": {
-          "high": 1.0,
-          "medium": 0.6,
-          "low": 0.3
-        },
-        "seed": 42,
-        "baseSigma": 0.152258
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.03445,
-          "recallAtK": 0.233542,
-          "ndcgAtK": 0.120396,
-          "hitRateAtK": 0.31,
-          "mrr": 0.102721,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111956,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.074035,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.0662,
-          "recallAtK": 0.218167,
-          "ndcgAtK": 0.145715,
-          "hitRateAtK": 0.524,
-          "mrr": 0.188777,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.301536
-      },
-      "seconds": 10.4
-    },
-    {
-      "epsilon": 3.0,
-      "variant": "uniform",
-      "dpConfig": {
-        "epsilon": 3.0,
-        "delta": 1e-05,
-        "degreeBound": 15,
-        "sensitivity": 0.094281,
-        "relationTiers": {
-          "MEMBER_OF": "high",
-          "SENDS": "medium",
-          "POSTED_IN": "medium",
-          "CONTAINS": "medium",
-          "INTERESTED_IN": "low",
-          "RELATED_TO": "low"
-        },
-        "tierNoiseMultipliers": {
-          "high": 1.0,
-          "medium": 1.0,
-          "low": 1.0
-        },
-        "seed": 42,
-        "baseSigma": 0.152258
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.03445,
-          "recallAtK": 0.233542,
-          "ndcgAtK": 0.120306,
-          "hitRateAtK": 0.31,
-          "mrr": 0.102593,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111857,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.073913,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.0662,
-          "recallAtK": 0.218167,
-          "ndcgAtK": 0.145654,
-          "hitRateAtK": 0.524,
-          "mrr": 0.188633,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.302137
-      },
-      "seconds": 10.4
-    },
-    {
-      "epsilon": 3.0,
-      "variant": "gradient",
-      "dpConfig": {
-        "mechanism": "gradient",
-        "epsilon": 3.0,
-        "delta": 1e-05,
-        "clipNorm": 0.05,
-        "totalSteps": 20,
-        "seed": 42,
-        "sigma": 0.722221
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.03605,
-          "recallAtK": 0.2375,
-          "ndcgAtK": 0.121723,
-          "hitRateAtK": 0.32,
-          "mrr": 0.10197,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.023533,
-          "recallAtK": 0.235333,
-          "ndcgAtK": 0.110655,
-          "hitRateAtK": 0.235333,
-          "mrr": 0.073445,
+          "precisionAtK": 0.024733,
+          "recallAtK": 0.247333,
+          "ndcgAtK": 0.116309,
+          "hitRateAtK": 0.247333,
+          "mrr": 0.077136,
           "evaluatedUsers": 1500
         },
         "cold": {
           "precisionAtK": 0.0736,
-          "recallAtK": 0.244,
-          "ndcgAtK": 0.15493,
-          "hitRateAtK": 0.574,
-          "mrr": 0.187545,
+          "recallAtK": 0.244167,
+          "ndcgAtK": 0.159929,
+          "hitRateAtK": 0.578,
+          "mrr": 0.204233,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.400121
+        "coldStartRobustnessNdcgAtK": 1.375036
       },
-      "seconds": 9.3
+      "seconds": 40.6
+    },
+    {
+      "epsilon": 0.25,
+      "variant": "uniform",
+      "dpConfig": {
+        "epsilon": 0.25,
+        "delta": 1e-05,
+        "degreeBound": 15,
+        "sensitivity": 0.094281,
+        "relationTiers": {
+          "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
+          "SENDS": "medium",
+          "POSTED_IN": "medium",
+          "CONTAINS": "medium",
+          "INTERESTED_IN": "low",
+          "RELATED_TO": "low"
+        },
+        "tierNoiseMultipliers": {
+          "high": 1.0,
+          "medium": 1.0,
+          "low": 1.0
+        },
+        "seed": 42,
+        "baseSigma": 1.82709
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.03695,
+          "recallAtK": 0.246542,
+          "ndcgAtK": 0.127192,
+          "hitRateAtK": 0.33,
+          "mrr": 0.108885,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.024733,
+          "recallAtK": 0.247333,
+          "ndcgAtK": 0.11628,
+          "hitRateAtK": 0.247333,
+          "mrr": 0.077103,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.0736,
+          "recallAtK": 0.244167,
+          "ndcgAtK": 0.159929,
+          "hitRateAtK": 0.578,
+          "mrr": 0.204233,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.375381
+      },
+      "seconds": 39.3
+    },
+    {
+      "epsilon": 0.25,
+      "variant": "gradient",
+      "dpConfig": {
+        "mechanism": "gradient",
+        "epsilon": 0.25,
+        "delta": 1e-05,
+        "clipNorm": 0.05,
+        "totalSteps": 300,
+        "seed": 42,
+        "sigma": 33.565795
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.02875,
+          "recallAtK": 0.189958,
+          "ndcgAtK": 0.10463,
+          "hitRateAtK": 0.26,
+          "mrr": 0.096318,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.018933,
+          "recallAtK": 0.189333,
+          "ndcgAtK": 0.09392,
+          "hitRateAtK": 0.189333,
+          "mrr": 0.065356,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.0582,
+          "recallAtK": 0.191833,
+          "ndcgAtK": 0.13676,
+          "hitRateAtK": 0.472,
+          "mrr": 0.189203,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.456135
+      },
+      "seconds": 39.2
+    },
+    {
+      "epsilon": 0.5,
+      "variant": "tiered",
+      "dpConfig": {
+        "epsilon": 0.5,
+        "delta": 1e-05,
+        "degreeBound": 15,
+        "sensitivity": 0.094281,
+        "relationTiers": {
+          "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
+          "SENDS": "medium",
+          "POSTED_IN": "medium",
+          "CONTAINS": "medium",
+          "INTERESTED_IN": "low",
+          "RELATED_TO": "low"
+        },
+        "tierNoiseMultipliers": {
+          "high": 1.0,
+          "medium": 0.6,
+          "low": 0.3
+        },
+        "seed": 42,
+        "baseSigma": 0.913545
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.03695,
+          "recallAtK": 0.246542,
+          "ndcgAtK": 0.127214,
+          "hitRateAtK": 0.33,
+          "mrr": 0.10891,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.024733,
+          "recallAtK": 0.247333,
+          "ndcgAtK": 0.116309,
+          "hitRateAtK": 0.247333,
+          "mrr": 0.077136,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.0736,
+          "recallAtK": 0.244167,
+          "ndcgAtK": 0.159929,
+          "hitRateAtK": 0.578,
+          "mrr": 0.204233,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.375036
+      },
+      "seconds": 39.4
+    },
+    {
+      "epsilon": 0.5,
+      "variant": "uniform",
+      "dpConfig": {
+        "epsilon": 0.5,
+        "delta": 1e-05,
+        "degreeBound": 15,
+        "sensitivity": 0.094281,
+        "relationTiers": {
+          "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
+          "SENDS": "medium",
+          "POSTED_IN": "medium",
+          "CONTAINS": "medium",
+          "INTERESTED_IN": "low",
+          "RELATED_TO": "low"
+        },
+        "tierNoiseMultipliers": {
+          "high": 1.0,
+          "medium": 1.0,
+          "low": 1.0
+        },
+        "seed": 42,
+        "baseSigma": 0.913545
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.03695,
+          "recallAtK": 0.246542,
+          "ndcgAtK": 0.127214,
+          "hitRateAtK": 0.33,
+          "mrr": 0.10891,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.024733,
+          "recallAtK": 0.247333,
+          "ndcgAtK": 0.116309,
+          "hitRateAtK": 0.247333,
+          "mrr": 0.077136,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.0736,
+          "recallAtK": 0.244167,
+          "ndcgAtK": 0.159929,
+          "hitRateAtK": 0.578,
+          "mrr": 0.204233,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.375036
+      },
+      "seconds": 39.4
+    },
+    {
+      "epsilon": 0.5,
+      "variant": "gradient",
+      "dpConfig": {
+        "mechanism": "gradient",
+        "epsilon": 0.5,
+        "delta": 1e-05,
+        "clipNorm": 0.05,
+        "totalSteps": 300,
+        "seed": 42,
+        "sigma": 16.782898
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.0295,
+          "recallAtK": 0.194125,
+          "ndcgAtK": 0.10793,
+          "hitRateAtK": 0.2675,
+          "mrr": 0.100075,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.019267,
+          "recallAtK": 0.192667,
+          "ndcgAtK": 0.09725,
+          "hitRateAtK": 0.192667,
+          "mrr": 0.068563,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.0602,
+          "recallAtK": 0.1985,
+          "ndcgAtK": 0.139969,
+          "hitRateAtK": 0.492,
+          "mrr": 0.194612,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.439262
+      },
+      "seconds": 39.0
+    },
+    {
+      "epsilon": 1.0,
+      "variant": "tiered",
+      "dpConfig": {
+        "epsilon": 1.0,
+        "delta": 1e-05,
+        "degreeBound": 15,
+        "sensitivity": 0.094281,
+        "relationTiers": {
+          "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
+          "SENDS": "medium",
+          "POSTED_IN": "medium",
+          "CONTAINS": "medium",
+          "INTERESTED_IN": "low",
+          "RELATED_TO": "low"
+        },
+        "tierNoiseMultipliers": {
+          "high": 1.0,
+          "medium": 0.6,
+          "low": 0.3
+        },
+        "seed": 42,
+        "baseSigma": 0.456773
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.03695,
+          "recallAtK": 0.246542,
+          "ndcgAtK": 0.127214,
+          "hitRateAtK": 0.33,
+          "mrr": 0.10891,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.024733,
+          "recallAtK": 0.247333,
+          "ndcgAtK": 0.116309,
+          "hitRateAtK": 0.247333,
+          "mrr": 0.077136,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.0736,
+          "recallAtK": 0.244167,
+          "ndcgAtK": 0.159929,
+          "hitRateAtK": 0.578,
+          "mrr": 0.204233,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.375036
+      },
+      "seconds": 39.4
+    },
+    {
+      "epsilon": 1.0,
+      "variant": "uniform",
+      "dpConfig": {
+        "epsilon": 1.0,
+        "delta": 1e-05,
+        "degreeBound": 15,
+        "sensitivity": 0.094281,
+        "relationTiers": {
+          "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
+          "SENDS": "medium",
+          "POSTED_IN": "medium",
+          "CONTAINS": "medium",
+          "INTERESTED_IN": "low",
+          "RELATED_TO": "low"
+        },
+        "tierNoiseMultipliers": {
+          "high": 1.0,
+          "medium": 1.0,
+          "low": 1.0
+        },
+        "seed": 42,
+        "baseSigma": 0.456773
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.03695,
+          "recallAtK": 0.246542,
+          "ndcgAtK": 0.127214,
+          "hitRateAtK": 0.33,
+          "mrr": 0.10891,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.024733,
+          "recallAtK": 0.247333,
+          "ndcgAtK": 0.116309,
+          "hitRateAtK": 0.247333,
+          "mrr": 0.077136,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.0736,
+          "recallAtK": 0.244167,
+          "ndcgAtK": 0.159929,
+          "hitRateAtK": 0.578,
+          "mrr": 0.204233,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.375036
+      },
+      "seconds": 39.4
+    },
+    {
+      "epsilon": 1.0,
+      "variant": "gradient",
+      "dpConfig": {
+        "mechanism": "gradient",
+        "epsilon": 1.0,
+        "delta": 1e-05,
+        "clipNorm": 0.05,
+        "totalSteps": 300,
+        "seed": 42,
+        "sigma": 8.391449
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.0301,
+          "recallAtK": 0.19975,
+          "ndcgAtK": 0.111978,
+          "hitRateAtK": 0.2715,
+          "mrr": 0.102621,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.019867,
+          "recallAtK": 0.198667,
+          "ndcgAtK": 0.102648,
+          "hitRateAtK": 0.198667,
+          "mrr": 0.073846,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.0608,
+          "recallAtK": 0.203,
+          "ndcgAtK": 0.139967,
+          "hitRateAtK": 0.49,
+          "mrr": 0.188948,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.363559
+      },
+      "seconds": 38.9
+    },
+    {
+      "epsilon": 3.0,
+      "variant": "tiered",
+      "dpConfig": {
+        "epsilon": 3.0,
+        "delta": 1e-05,
+        "degreeBound": 15,
+        "sensitivity": 0.094281,
+        "relationTiers": {
+          "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
+          "SENDS": "medium",
+          "POSTED_IN": "medium",
+          "CONTAINS": "medium",
+          "INTERESTED_IN": "low",
+          "RELATED_TO": "low"
+        },
+        "tierNoiseMultipliers": {
+          "high": 1.0,
+          "medium": 0.6,
+          "low": 0.3
+        },
+        "seed": 42,
+        "baseSigma": 0.152258
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.037,
+          "recallAtK": 0.246708,
+          "ndcgAtK": 0.12746,
+          "hitRateAtK": 0.33,
+          "mrr": 0.109151,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.024733,
+          "recallAtK": 0.247333,
+          "ndcgAtK": 0.116555,
+          "hitRateAtK": 0.247333,
+          "mrr": 0.07747,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.0738,
+          "recallAtK": 0.244833,
+          "ndcgAtK": 0.160177,
+          "hitRateAtK": 0.578,
+          "mrr": 0.204197,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.374261
+      },
+      "seconds": 39.2
+    },
+    {
+      "epsilon": 3.0,
+      "variant": "uniform",
+      "dpConfig": {
+        "epsilon": 3.0,
+        "delta": 1e-05,
+        "degreeBound": 15,
+        "sensitivity": 0.094281,
+        "relationTiers": {
+          "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
+          "SENDS": "medium",
+          "POSTED_IN": "medium",
+          "CONTAINS": "medium",
+          "INTERESTED_IN": "low",
+          "RELATED_TO": "low"
+        },
+        "tierNoiseMultipliers": {
+          "high": 1.0,
+          "medium": 1.0,
+          "low": 1.0
+        },
+        "seed": 42,
+        "baseSigma": 0.152258
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.037,
+          "recallAtK": 0.246708,
+          "ndcgAtK": 0.127272,
+          "hitRateAtK": 0.33,
+          "mrr": 0.108896,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.024733,
+          "recallAtK": 0.247333,
+          "ndcgAtK": 0.116301,
+          "hitRateAtK": 0.247333,
+          "mrr": 0.077129,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.0738,
+          "recallAtK": 0.244833,
+          "ndcgAtK": 0.160186,
+          "hitRateAtK": 0.578,
+          "mrr": 0.204197,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.377343
+      },
+      "seconds": 39.4
+    },
+    {
+      "epsilon": 3.0,
+      "variant": "gradient",
+      "dpConfig": {
+        "mechanism": "gradient",
+        "epsilon": 3.0,
+        "delta": 1e-05,
+        "clipNorm": 0.05,
+        "totalSteps": 300,
+        "seed": 42,
+        "sigma": 2.79715
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.03155,
+          "recallAtK": 0.209708,
+          "ndcgAtK": 0.112138,
+          "hitRateAtK": 0.2845,
+          "mrr": 0.099137,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.020867,
+          "recallAtK": 0.208667,
+          "ndcgAtK": 0.101908,
+          "hitRateAtK": 0.208667,
+          "mrr": 0.069845,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.0636,
+          "recallAtK": 0.212833,
+          "ndcgAtK": 0.142826,
+          "hitRateAtK": 0.512,
+          "mrr": 0.187013,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.401512
+      },
+      "seconds": 38.7
     },
     {
       "epsilon": 5.0,
@@ -987,6 +996,7 @@
         "sensitivity": 0.094281,
         "relationTiers": {
           "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
           "SENDS": "medium",
           "POSTED_IN": "medium",
           "CONTAINS": "medium",
@@ -1003,32 +1013,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.03445,
-          "recallAtK": 0.233542,
-          "ndcgAtK": 0.120176,
-          "hitRateAtK": 0.31,
-          "mrr": 0.102411,
+          "precisionAtK": 0.03705,
+          "recallAtK": 0.247125,
+          "ndcgAtK": 0.127561,
+          "hitRateAtK": 0.33,
+          "mrr": 0.109124,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111687,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.073677,
+          "precisionAtK": 0.0248,
+          "recallAtK": 0.248,
+          "ndcgAtK": 0.116723,
+          "hitRateAtK": 0.248,
+          "mrr": 0.077511,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0662,
-          "recallAtK": 0.218167,
-          "ndcgAtK": 0.145644,
-          "hitRateAtK": 0.524,
-          "mrr": 0.18861,
+          "precisionAtK": 0.0738,
+          "recallAtK": 0.2445,
+          "ndcgAtK": 0.160077,
+          "hitRateAtK": 0.576,
+          "mrr": 0.203961,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.304033
+        "coldStartRobustnessNdcgAtK": 1.371428
       },
-      "seconds": 11.2
+      "seconds": 39.5
     },
     {
       "epsilon": 5.0,
@@ -1040,6 +1050,7 @@
         "sensitivity": 0.094281,
         "relationTiers": {
           "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
           "SENDS": "medium",
           "POSTED_IN": "medium",
           "CONTAINS": "medium",
@@ -1056,32 +1067,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.03445,
-          "recallAtK": 0.233542,
-          "ndcgAtK": 0.120379,
-          "hitRateAtK": 0.31,
-          "mrr": 0.102683,
+          "precisionAtK": 0.03695,
+          "recallAtK": 0.246458,
+          "ndcgAtK": 0.127187,
+          "hitRateAtK": 0.3295,
+          "mrr": 0.108851,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111954,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.074034,
+          "precisionAtK": 0.024733,
+          "recallAtK": 0.247333,
+          "ndcgAtK": 0.116309,
+          "hitRateAtK": 0.247333,
+          "mrr": 0.077136,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0662,
-          "recallAtK": 0.218167,
-          "ndcgAtK": 0.145654,
-          "hitRateAtK": 0.524,
-          "mrr": 0.188633,
+          "precisionAtK": 0.0736,
+          "recallAtK": 0.243833,
+          "ndcgAtK": 0.159822,
+          "hitRateAtK": 0.576,
+          "mrr": 0.203997,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.30101
+        "coldStartRobustnessNdcgAtK": 1.37412
       },
-      "seconds": 11.3
+      "seconds": 39.5
     },
     {
       "epsilon": 5.0,
@@ -1091,185 +1102,187 @@
         "epsilon": 5.0,
         "delta": 1e-05,
         "clipNorm": 0.05,
-        "totalSteps": 20,
+        "totalSteps": 300,
         "seed": 42,
-        "sigma": 0.433333
+        "sigma": 1.67829
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0347,
-          "recallAtK": 0.23375,
-          "ndcgAtK": 0.119236,
-          "hitRateAtK": 0.308,
-          "mrr": 0.098883,
+          "precisionAtK": 0.03245,
+          "recallAtK": 0.215,
+          "ndcgAtK": 0.115442,
+          "hitRateAtK": 0.293,
+          "mrr": 0.10391,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.023667,
-          "recallAtK": 0.236667,
-          "ndcgAtK": 0.11084,
-          "hitRateAtK": 0.236667,
-          "mrr": 0.073394,
+          "precisionAtK": 0.0214,
+          "recallAtK": 0.214,
+          "ndcgAtK": 0.103597,
+          "hitRateAtK": 0.214,
+          "mrr": 0.070586,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0678,
-          "recallAtK": 0.225,
-          "ndcgAtK": 0.144424,
-          "hitRateAtK": 0.522,
-          "mrr": 0.175351,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.302992
-      },
-      "seconds": 10.5
-    },
-    {
-      "epsilon": 8.0,
-      "variant": "tiered",
-      "dpConfig": {
-        "epsilon": 8.0,
-        "delta": 1e-05,
-        "degreeBound": 15,
-        "sensitivity": 0.094281,
-        "relationTiers": {
-          "MEMBER_OF": "high",
-          "SENDS": "medium",
-          "POSTED_IN": "medium",
-          "CONTAINS": "medium",
-          "INTERESTED_IN": "low",
-          "RELATED_TO": "low"
-        },
-        "tierNoiseMultipliers": {
-          "high": 1.0,
-          "medium": 0.6,
-          "low": 0.3
-        },
-        "seed": 42,
-        "baseSigma": 0.057097
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.03445,
-          "recallAtK": 0.233542,
-          "ndcgAtK": 0.120136,
-          "hitRateAtK": 0.31,
-          "mrr": 0.102369,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111626,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.073606,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.0662,
-          "recallAtK": 0.218167,
-          "ndcgAtK": 0.145665,
-          "hitRateAtK": 0.524,
-          "mrr": 0.18866,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.304937
-      },
-      "seconds": 10.5
-    },
-    {
-      "epsilon": 8.0,
-      "variant": "uniform",
-      "dpConfig": {
-        "epsilon": 8.0,
-        "delta": 1e-05,
-        "degreeBound": 15,
-        "sensitivity": 0.094281,
-        "relationTiers": {
-          "MEMBER_OF": "high",
-          "SENDS": "medium",
-          "POSTED_IN": "medium",
-          "CONTAINS": "medium",
-          "INTERESTED_IN": "low",
-          "RELATED_TO": "low"
-        },
-        "tierNoiseMultipliers": {
-          "high": 1.0,
-          "medium": 1.0,
-          "low": 1.0
-        },
-        "seed": 42,
-        "baseSigma": 0.057097
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.0345,
-          "recallAtK": 0.233792,
-          "ndcgAtK": 0.12045,
-          "hitRateAtK": 0.3105,
-          "mrr": 0.102692,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111954,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.074034,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.0664,
-          "recallAtK": 0.219167,
-          "ndcgAtK": 0.145937,
-          "hitRateAtK": 0.526,
-          "mrr": 0.188666,
-          "evaluatedUsers": 500
-        },
-        "coldStartRobustnessNdcgAtK": 1.303543
-      },
-      "seconds": 10.3
-    },
-    {
-      "epsilon": 8.0,
-      "variant": "gradient",
-      "dpConfig": {
-        "mechanism": "gradient",
-        "epsilon": 8.0,
-        "delta": 1e-05,
-        "clipNorm": 0.05,
-        "totalSteps": 20,
-        "seed": 42,
-        "sigma": 0.270833
-      },
-      "metrics": {
-        "all": {
-          "precisionAtK": 0.0346,
-          "recallAtK": 0.230917,
-          "ndcgAtK": 0.115123,
-          "hitRateAtK": 0.306,
-          "mrr": 0.093536,
-          "evaluatedUsers": 2000
-        },
-        "warm": {
-          "precisionAtK": 0.023133,
-          "recallAtK": 0.231333,
-          "ndcgAtK": 0.105302,
-          "hitRateAtK": 0.231333,
-          "mrr": 0.067418,
-          "evaluatedUsers": 1500
-        },
-        "cold": {
-          "precisionAtK": 0.069,
-          "recallAtK": 0.229667,
-          "ndcgAtK": 0.144586,
+          "precisionAtK": 0.0656,
+          "recallAtK": 0.218,
+          "ndcgAtK": 0.150977,
           "hitRateAtK": 0.53,
-          "mrr": 0.171888,
+          "mrr": 0.20388,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.373066
+        "coldStartRobustnessNdcgAtK": 1.457359
       },
-      "seconds": 9.2
+      "seconds": 38.9
+    },
+    {
+      "epsilon": 8.0,
+      "variant": "tiered",
+      "dpConfig": {
+        "epsilon": 8.0,
+        "delta": 1e-05,
+        "degreeBound": 15,
+        "sensitivity": 0.094281,
+        "relationTiers": {
+          "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
+          "SENDS": "medium",
+          "POSTED_IN": "medium",
+          "CONTAINS": "medium",
+          "INTERESTED_IN": "low",
+          "RELATED_TO": "low"
+        },
+        "tierNoiseMultipliers": {
+          "high": 1.0,
+          "medium": 0.6,
+          "low": 0.3
+        },
+        "seed": 42,
+        "baseSigma": 0.057097
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.0371,
+          "recallAtK": 0.247625,
+          "ndcgAtK": 0.127703,
+          "hitRateAtK": 0.33,
+          "mrr": 0.109118,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.024867,
+          "recallAtK": 0.248667,
+          "ndcgAtK": 0.116916,
+          "hitRateAtK": 0.248667,
+          "mrr": 0.077578,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.0738,
+          "recallAtK": 0.2445,
+          "ndcgAtK": 0.160066,
+          "hitRateAtK": 0.574,
+          "mrr": 0.203739,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.369072
+      },
+      "seconds": 39.9
+    },
+    {
+      "epsilon": 8.0,
+      "variant": "uniform",
+      "dpConfig": {
+        "epsilon": 8.0,
+        "delta": 1e-05,
+        "degreeBound": 15,
+        "sensitivity": 0.094281,
+        "relationTiers": {
+          "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
+          "SENDS": "medium",
+          "POSTED_IN": "medium",
+          "CONTAINS": "medium",
+          "INTERESTED_IN": "low",
+          "RELATED_TO": "low"
+        },
+        "tierNoiseMultipliers": {
+          "high": 1.0,
+          "medium": 1.0,
+          "low": 1.0
+        },
+        "seed": 42,
+        "baseSigma": 0.057097
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.0369,
+          "recallAtK": 0.246208,
+          "ndcgAtK": 0.127272,
+          "hitRateAtK": 0.329,
+          "mrr": 0.109036,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.024733,
+          "recallAtK": 0.247333,
+          "ndcgAtK": 0.116545,
+          "hitRateAtK": 0.247333,
+          "mrr": 0.07746,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.0734,
+          "recallAtK": 0.242833,
+          "ndcgAtK": 0.159451,
+          "hitRateAtK": 0.574,
+          "mrr": 0.203761,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.368147
+      },
+      "seconds": 40.3
+    },
+    {
+      "epsilon": 8.0,
+      "variant": "gradient",
+      "dpConfig": {
+        "mechanism": "gradient",
+        "epsilon": 8.0,
+        "delta": 1e-05,
+        "clipNorm": 0.05,
+        "totalSteps": 300,
+        "seed": 42,
+        "sigma": 1.048931
+      },
+      "metrics": {
+        "all": {
+          "precisionAtK": 0.03155,
+          "recallAtK": 0.210917,
+          "ndcgAtK": 0.113929,
+          "hitRateAtK": 0.2855,
+          "mrr": 0.102971,
+          "evaluatedUsers": 2000
+        },
+        "warm": {
+          "precisionAtK": 0.021067,
+          "recallAtK": 0.210667,
+          "ndcgAtK": 0.102129,
+          "hitRateAtK": 0.210667,
+          "mrr": 0.069738,
+          "evaluatedUsers": 1500
+        },
+        "cold": {
+          "precisionAtK": 0.063,
+          "recallAtK": 0.211667,
+          "ndcgAtK": 0.149332,
+          "hitRateAtK": 0.51,
+          "mrr": 0.202669,
+          "evaluatedUsers": 500
+        },
+        "coldStartRobustnessNdcgAtK": 1.462196
+      },
+      "seconds": 38.8
     },
     {
       "epsilon": 10.0,
@@ -1281,6 +1294,7 @@
         "sensitivity": 0.094281,
         "relationTiers": {
           "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
           "SENDS": "medium",
           "POSTED_IN": "medium",
           "CONTAINS": "medium",
@@ -1297,32 +1311,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0344,
-          "recallAtK": 0.233375,
-          "ndcgAtK": 0.12007,
-          "hitRateAtK": 0.31,
-          "mrr": 0.10237,
+          "precisionAtK": 0.03705,
+          "recallAtK": 0.247458,
+          "ndcgAtK": 0.127635,
+          "hitRateAtK": 0.3295,
+          "mrr": 0.109068,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111648,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.073637,
+          "precisionAtK": 0.024867,
+          "recallAtK": 0.248667,
+          "ndcgAtK": 0.116916,
+          "hitRateAtK": 0.248667,
+          "mrr": 0.077578,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.066,
-          "recallAtK": 0.2175,
-          "ndcgAtK": 0.145336,
-          "hitRateAtK": 0.524,
-          "mrr": 0.188571,
+          "precisionAtK": 0.0736,
+          "recallAtK": 0.243833,
+          "ndcgAtK": 0.159794,
+          "hitRateAtK": 0.572,
+          "mrr": 0.203539,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.301738
+        "coldStartRobustnessNdcgAtK": 1.366751
       },
-      "seconds": 10.3
+      "seconds": 38.8
     },
     {
       "epsilon": 10.0,
@@ -1334,6 +1348,7 @@
         "sensitivity": 0.094281,
         "relationTiers": {
           "MEMBER_OF": "high",
+          "FRIENDS_WITH": "high",
           "SENDS": "medium",
           "POSTED_IN": "medium",
           "CONTAINS": "medium",
@@ -1350,32 +1365,32 @@
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0345,
-          "recallAtK": 0.233792,
-          "ndcgAtK": 0.120266,
-          "hitRateAtK": 0.3105,
-          "mrr": 0.102459,
+          "precisionAtK": 0.0369,
+          "recallAtK": 0.246208,
+          "ndcgAtK": 0.127269,
+          "hitRateAtK": 0.329,
+          "mrr": 0.109033,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.023867,
-          "recallAtK": 0.238667,
-          "ndcgAtK": 0.111698,
-          "hitRateAtK": 0.238667,
-          "mrr": 0.07369,
+          "precisionAtK": 0.024733,
+          "recallAtK": 0.247333,
+          "ndcgAtK": 0.116542,
+          "hitRateAtK": 0.247333,
+          "mrr": 0.077456,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0664,
-          "recallAtK": 0.219167,
-          "ndcgAtK": 0.145971,
-          "hitRateAtK": 0.526,
-          "mrr": 0.188766,
+          "precisionAtK": 0.0734,
+          "recallAtK": 0.242833,
+          "ndcgAtK": 0.159451,
+          "hitRateAtK": 0.574,
+          "mrr": 0.203761,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.306841
+        "coldStartRobustnessNdcgAtK": 1.368186
       },
-      "seconds": 10.5
+      "seconds": 38.4
     },
     {
       "epsilon": 10.0,
@@ -1385,69 +1400,349 @@
         "epsilon": 10.0,
         "delta": 1e-05,
         "clipNorm": 0.05,
-        "totalSteps": 20,
+        "totalSteps": 300,
         "seed": 42,
-        "sigma": 0.216666
+        "sigma": 0.839145
       },
       "metrics": {
         "all": {
-          "precisionAtK": 0.0341,
-          "recallAtK": 0.229042,
-          "ndcgAtK": 0.115541,
-          "hitRateAtK": 0.3035,
-          "mrr": 0.095775,
+          "precisionAtK": 0.03105,
+          "recallAtK": 0.207583,
+          "ndcgAtK": 0.112491,
+          "hitRateAtK": 0.2815,
+          "mrr": 0.102349,
           "evaluatedUsers": 2000
         },
         "warm": {
-          "precisionAtK": 0.023067,
-          "recallAtK": 0.230667,
-          "ndcgAtK": 0.1058,
-          "hitRateAtK": 0.230667,
-          "mrr": 0.068144,
+          "precisionAtK": 0.0208,
+          "recallAtK": 0.208,
+          "ndcgAtK": 0.100821,
+          "hitRateAtK": 0.208,
+          "mrr": 0.068828,
           "evaluatedUsers": 1500
         },
         "cold": {
-          "precisionAtK": 0.0672,
-          "recallAtK": 0.224167,
-          "ndcgAtK": 0.144764,
-          "hitRateAtK": 0.522,
-          "mrr": 0.178667,
+          "precisionAtK": 0.0618,
+          "recallAtK": 0.206333,
+          "ndcgAtK": 0.147501,
+          "hitRateAtK": 0.502,
+          "mrr": 0.20291,
           "evaluatedUsers": 500
         },
-        "coldStartRobustnessNdcgAtK": 1.36828
+        "coldStartRobustnessNdcgAtK": 1.462988
       },
-      "seconds": 11.2
+      "seconds": 37.9
     }
   ],
   "timingsSeconds": {
     "random": 0.0,
     "popularity": 0.0,
-    "content": 2.8,
-    "node2vec": 6.5,
-    "graphsage": 9.7,
-    "lightgcn": 3.2
+    "content": 3.2,
+    "node2vec": 10.8,
+    "graphsage": 95.2,
+    "lightgcn": 3.4
   },
   "graphsageLosses": [
     0.6784015923030124,
-    0.6775212985808229,
-    0.6766483522869603,
-    0.6757824840498112,
-    0.6749234492356906,
-    0.6740710270222033,
-    0.6732250194761046,
-    0.6723852506345468,
-    0.6715515655888348,
-    0.6707238295700335,
-    0.6699019270360255,
-    0.66908576075984,
-    0.6682752509193234,
-    0.667470334188439,
-    0.666670962830711,
-    0.6658771037955318,
-    0.6650887378182406,
-    0.6643058585250629,
-    0.6635284715441431,
-    0.6627565936240519
+    0.6736595452072257,
+    0.6691067911853535,
+    0.6646685475667777,
+    0.660284406691154,
+    0.6559056186121144,
+    0.6514932397935679,
+    0.6470170053664942,
+    0.6424547919494152,
+    0.6377925353789808,
+    0.6330244485921062,
+    0.6281533505997122,
+    0.6231908781535985,
+    0.6181573286080654,
+    0.6130809050088641,
+    0.607996227661863,
+    0.6029421406072502,
+    0.5979590362050787,
+    0.5930860733089388,
+    0.5883587059258395,
+    0.5838068506503202,
+    0.5794538465712247,
+    0.5753161783783504,
+    0.5714038057321132,
+    0.5677208915375643,
+    0.5642667334935789,
+    0.5610367473702992,
+    0.5580234015536515,
+    0.555217046602037,
+    0.5526066163939873,
+    0.5501801992102943,
+    0.5479254897031346,
+    0.5458301383976009,
+    0.5438820163706127,
+    0.5420694110833085,
+    0.5403811666212551,
+    0.5388067788860369,
+    0.5373364541018769,
+    0.5359611374620782,
+    0.5346725177220121,
+    0.5334630128519654,
+    0.532325741318893,
+    0.5312544830565253,
+    0.5302436336563142,
+    0.5292881547610025,
+    0.5283835230865757,
+    0.527525679963257,
+    0.5267109827958042,
+    0.5259361594138563,
+    0.5251982659225314,
+    0.5244946483727028,
+    0.523822908345339,
+    0.5231808723777113,
+    0.5225665650425925,
+    0.5219781854158759,
+    0.5214140866249072,
+    0.5208727581516656,
+    0.5203528105651976,
+    0.5198529623709387,
+    0.5193720286862812,
+    0.5189089114784737,
+    0.5184625911299628,
+    0.5180321191256311,
+    0.5176166116846761,
+    0.5172152441861705,
+    0.5168272462611403,
+    0.5164518974450255,
+    0.5160885233026367,
+    0.5157364919532612,
+    0.5153952109366593,
+    0.5150641243715217,
+    0.514742710366867,
+    0.5144304786540679,
+    0.5141269684130189,
+    0.5138317462705979,
+    0.5135444044532682,
+    0.5132645590785905,
+    0.5129918485727231,
+    0.5127259322028144,
+    0.5124664887146401,
+    0.5122132150669948,
+    0.5119658252552802,
+    0.5117240492174957,
+    0.5114876318164668,
+    0.5112563318926858,
+    0.5110299213825967,
+    0.5108081844975584,
+    0.5105909169590858,
+    0.5103779252862835,
+    0.5101690261316948,
+    0.5099640456620556,
+    0.5097628189806978,
+    0.5095651895885892,
+    0.5093710088812105,
+    0.5091801356786836,
+    0.5089924357867552,
+    0.5088077815864187,
+    0.5086260516501304,
+    0.5084471303827268,
+    0.5082709076852963,
+    0.5080972786403967,
+    0.5079261432171273,
+    0.5077574059946834,
+    0.5075909759031281,
+    0.5074267659802062,
+    0.5072646931431233,
+    0.5071046779742875,
+    0.506946644520091,
+    0.5067905201018749,
+    0.5066362351382866,
+    0.5064837229782917,
+    0.5063329197441627,
+    0.5061837641838081,
+    0.5060361975318559,
+    0.505890163378942,
+    0.505745607548695,
+    0.5056024779819394,
+    0.5054607246276782,
+    0.505320299340436,
+    0.5051811557835777,
+    0.5050432493382409,
+    0.5049065370175433,
+    0.5047709773857461,
+    0.5046365304820786,
+    0.5045031577489434,
+    0.5043708219642415,
+    0.5042394871775716,
+    0.504109118650074,
+    0.5039796827977026,
+    0.5038511471377204,
+    0.5037234802382312,
+    0.5035966516705649,
+    0.5034706319643485,
+    0.5033453925651077,
+    0.5032209057942458,
+    0.503097144811263,
+    0.5029740835780853,
+    0.5028516968253768,
+    0.5027299600207222,
+    0.50260884933857,
+    0.5024883416318328,
+    0.5023684144050506,
+    0.5022490457890253,
+    0.5021302145168433,
+    0.502011899901205,
+    0.5018940818129888,
+    0.5017767406609778,
+    0.5016598573726846,
+    0.5015434133762124,
+    0.5014273905830958,
+    0.501311771372065,
+    0.5011965385736852,
+    0.5010816754558224,
+    0.5009671657098922,
+    0.5008529934378486,
+    0.5007391431398757,
+    0.5006255997027433,
+    0.5005123483887961,
+    0.5003993748255404,
+    0.5002866649958013,
+    0.5001742052284218,
+    0.5000619821894758,
+    0.49994998287397496,
+    0.4998381945980399,
+    0.4997266049915212,
+    0.4996152019910449,
+    0.4995039738334668,
+    0.4993929090497153,
+    0.4992819964590093,
+    0.4991712251634328,
+    0.4990605845428528,
+    0.4989500642501672,
+    0.4988396542068686,
+    0.49872934459891327,
+    0.4986191258728814,
+    0.4985089887324214,
+    0.4983989241349639,
+    0.49828892328869784,
+    0.4981789776498005,
+    0.4980690789199085,
+    0.4979592190438256,
+    0.4978493902074569,
+    0.4977395848359606,
+    0.49762979559211223,
+    0.49752001537487206,
+    0.4974102373181481,
+    0.4973004547897493,
+    0.4971906613905205,
+    0.4970808509536518,
+    0.49697101754415735,
+    0.4968611554585154,
+    0.49675125922446134,
+    0.4966413236009303,
+    0.4965313435781385,
+    0.4964213143777987,
+    0.4963112314534624,
+    0.496201090490979,
+    0.4960908874090673,
+    0.4959806183599906,
+    0.49587027973032555,
+    0.49575986814181994,
+    0.49564938045232715,
+    0.49553881375681214,
+    0.49542816538841694,
+    0.49531743291957664,
+    0.4952066141631787,
+    0.495095707173752,
+    0.49498471024867685,
+    0.49487362192940515,
+    0.49476244100267935,
+    0.49465116650173724,
+    0.4945397977074931,
+    0.4944283341496807,
+    0.4943167756079452,
+    0.4942051221128727,
+    0.4940933739469419,
+    0.493981531645385,
+    0.49386959599694324,
+    0.4937575680445024,
+    0.49364544908559416,
+    0.4935332406727473,
+    0.49342094461367386,
+    0.4933085629712758,
+    0.493196098063455,
+    0.4930835524627121,
+    0.4929709289955192,
+    0.49285823074145,
+    0.49274546103205313,
+    0.4926326234494528,
+    0.4925197218246639,
+    0.4924067602356061,
+    0.4922937430048039,
+    0.4921806746967606,
+    0.49206756011499303,
+    0.49195440429871784,
+    0.4918412125191765,
+    0.4917279902755936,
+    0.4916147432907576,
+    0.4915014775062207,
+    0.49138819907710984,
+    0.49127491436654913,
+    0.49116162993968915,
+    0.4910483525573448,
+    0.49093508916924433,
+    0.49082184690689135,
+    0.4907086330760485,
+    0.4905954551488486,
+    0.4904823207555439,
+    0.4903692376759056,
+    0.49025621383028845,
+    0.49014325727037406,
+    0.4900303761696137,
+    0.48991757881338904,
+    0.48980487358891267,
+    0.4896922689748916,
+    0.4895797735309801,
+    0.489467395887047,
+    0.4893551447322853,
+    0.4892430288041939,
+    0.4891310568774608,
+    0.4890192377527795,
+    0.4889075802456267,
+    0.4887960931750386,
+    0.4886847853524111,
+    0.48857366557036114,
+    0.4884627425916779,
+    0.488352025138395,
+    0.4882415218810158,
+    0.4881312414279198,
+    0.48802119231497965,
+    0.4879113829954164,
+    0.4878018218299172,
+    0.48769251707704386,
+    0.48758347688395126,
+    0.4874747092774391,
+    0.48736622215535713,
+    0.4872580232783798,
+    0.48715012026216703,
+    0.4870425205699258,
+    0.4869352315053826,
+    0.48682826020617814,
+    0.48672161363769273,
+    0.4866152985873067,
+    0.4865093216591006,
+    0.4864036892690005,
+    0.486298407640364,
+    0.4861934828000099,
+    0.48608892057468794,
+    0.4859847265879836,
+    0.4858809062576535,
+    0.48577746479338446,
+    0.4856744071949677,
+    0.48557173825087907,
+    0.48546946253725637,
+    0.48536758441726063,
+    0.48526610804081144,
+    0.485165037344682,
+    0.4850643760529426,
+    0.48496412767773656,
+    0.4848642955203762
   ],
   "lightgcnLosses": [
     0.6785527663694438,
@@ -1551,5 +1846,5 @@
     0.48002076517660147,
     0.4783320653545637
   ],
-  "totalSeconds": 238.0
+  "totalSeconds": 937.3
 }

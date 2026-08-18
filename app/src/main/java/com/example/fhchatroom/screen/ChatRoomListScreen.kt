@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
@@ -102,7 +103,7 @@ enum class SortOption {
     OLDEST_FIRST
 }
 private enum class RoomTab { PUBLIC, PRIVATE }
-private enum class PublicRoomFilter { ALL, ACADEMIC, STUDENT }
+private enum class PublicRoomFilter { ALL, ACADEMIC, STUDENT, RECOMMENDED }
 
 @Composable
 fun ChatRoomListScreen(
@@ -131,6 +132,15 @@ fun ChatRoomListScreen(
 
     var tab by remember { mutableStateOf(RoomTab.PUBLIC) }
     var publicRoomFilter by remember { mutableStateOf(PublicRoomFilter.ALL) }
+
+    // Switching tab or filter swaps the list contents but the LazyColumn keeps
+    // its scroll offset, so the new list opens part-way down with its first
+    // row clipped -- which reads as a rendering fault rather than a scroll
+    // position. Reset to the top whenever the visible set changes.
+    val listState = rememberLazyListState()
+    LaunchedEffect(tab, publicRoomFilter, searchQuery) {
+        listState.scrollToItem(0)
+    }
 
     val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
     val context = LocalContext.current
@@ -242,6 +252,31 @@ fun ChatRoomListScreen(
         // TAB FILTERING
         // PUBLIC: predefined academic rooms plus student-created public rooms.
         // PRIVATE: private user-created rooms and DMs.
+        // Groups suggested by the offline GraphSAGE pipeline, read from
+        // users/{email}.recommendedRoomIds. They live behind their own filter
+        // chip rather than pinned above the list: pinned, they occupied the
+        // whole first screen and pushed the browsable rooms below the fold.
+        // The pipeline's ranking is preserved -- recommendedIds is already in
+        // score order, so the chip shows the model's ordering, not the list's.
+        val recommendedRooms = if (tab == RoomTab.PUBLIC) {
+            recommendationState?.roomIds.orEmpty().mapNotNull { roomId ->
+                rooms.firstOrNull { room ->
+                    room.id == roomId &&
+                            !room.isDirect &&
+                            !room.isPrivate &&
+                            // Recommend only student-made groups; academic
+                            // template rooms are auto-assigned scaffolding, not
+                            // discoveries (defense-in-depth with the pipeline).
+                            !room.templateRoom &&
+                            room.academicRoomKind.isBlank() &&
+                            currentUserEmail != null &&
+                            !room.members.contains(currentUserEmail)
+                }
+            }
+        } else {
+            emptyList()
+        }
+
         val tabRooms = when (tab) {
             RoomTab.PUBLIC -> {
                 val academicRooms = rooms.filter { room ->
@@ -255,6 +290,7 @@ fun ChatRoomListScreen(
                     PublicRoomFilter.ALL -> academicRooms + studentPublicRooms
                     PublicRoomFilter.ACADEMIC -> academicRooms
                     PublicRoomFilter.STUDENT -> studentPublicRooms
+                    PublicRoomFilter.RECOMMENDED -> recommendedRooms
                 }
             }
             RoomTab.PRIVATE -> rooms.filter { room ->
@@ -272,8 +308,15 @@ fun ChatRoomListScreen(
                     room.description.contains(searchQuery, ignoreCase = true)
         }
 
-        // Sort after filtering
-        val sortedRooms = when (sortOption) {
+        // Sort after filtering. Under the Recommended chip the order IS the
+        // result -- recommendedRoomIds arrives in descending score order from
+        // the pipeline -- so re-sorting it alphabetically would discard the
+        // ranking the model produced. Leave that list untouched.
+        val sortedRooms = if (
+            tab == RoomTab.PUBLIC && publicRoomFilter == PublicRoomFilter.RECOMMENDED
+        ) {
+            filteredRooms
+        } else when (sortOption) {
             SortOption.NAME_ASC -> filteredRooms.sortedBy { it.name.lowercase() }
             SortOption.NAME_DESC -> filteredRooms.sortedByDescending { it.name.lowercase() }
             SortOption.MEMBER_COUNT_ASC -> filteredRooms.sortedBy { it.members.size }
@@ -284,38 +327,24 @@ fun ChatRoomListScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // AI recommendations (BA2): groups suggested by the offline GraphSAGE
-        // pipeline, surfaced from users/{email}.recommendedRoomIds.
-        val recommendedRooms = if (tab == RoomTab.PUBLIC && searchQuery.isEmpty()) {
-            val recommendedIds = recommendationState?.roomIds.orEmpty()
-            recommendedIds.mapNotNull { roomId ->
-                rooms.firstOrNull { room ->
-                    room.id == roomId &&
-                            !room.isDirect &&
-                            !room.isPrivate &&
-                            // Recommend only student-made groups; academic
-                            // template rooms are auto-assigned scaffolding, not
-                            // discoveries (defense-in-depth with the pipeline).
-                            !room.templateRoom &&
-                            room.academicRoomKind.isBlank() &&
-                            currentUserEmail != null &&
-                            !room.members.contains(currentUserEmail)
-                }
-            }.take(5)
-        } else {
-            emptyList()
-        }
-
-        if (recommendedRooms.isNotEmpty()) {
-            RecommendedRoomsSection(
-                rooms = recommendedRooms,
-                source = recommendationState?.source ?: "NONE",
-                onJoinClicked = { room ->
-                    roomViewModel.joinRoom(room.id)
-                    onJoinClicked(room)
-                }
+        // Under the Recommended chip, name the generating model. The label is
+        // part of the delivery contract described in the thesis: a student can
+        // always see which model produced the suggestions they are looking at.
+        if (tab == RoomTab.PUBLIC &&
+            publicRoomFilter == PublicRoomFilter.RECOMMENDED &&
+            sortedRooms.isNotEmpty()
+        ) {
+            Text(
+                text = when (recommendationState?.source) {
+                    "GRAPH_SAGE_LOCAL" -> "Suggested for you by GraphSAGE"
+                    "LIGHT_GCN_LOCAL" -> "Suggested for you by LightGCN"
+                    "CONTENT_BASED" -> "Suggested for you by the content-based model"
+                    else -> "Suggested for you"
+                },
+                fontSize = 12.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(bottom = 6.dp)
             )
-            Spacer(modifier = Modifier.height(8.dp))
         }
 
         // List
@@ -334,6 +363,7 @@ fun ChatRoomListScreen(
                         academicRoomSyncError != null -> "Could not sync predefined rooms. Check Logcat for the Firestore error."
                         tab == RoomTab.PUBLIC && publicRoomFilter == PublicRoomFilter.ACADEMIC -> "No academic rooms available. Check your study path and semester in Profile."
                         tab == RoomTab.PUBLIC && publicRoomFilter == PublicRoomFilter.STUDENT -> "No student-made public rooms yet."
+                        tab == RoomTab.PUBLIC && publicRoomFilter == PublicRoomFilter.RECOMMENDED -> "No recommendations yet. They appear once the pipeline has run for your account."
                         tab == RoomTab.PUBLIC -> "No public rooms available yet."
                         else -> "No private rooms available"
                     },
@@ -347,7 +377,7 @@ fun ChatRoomListScreen(
                 }
             }
         } else {
-            LazyColumn(modifier = Modifier.weight(1f)) {
+            LazyColumn(state = listState, modifier = Modifier.weight(1f)) {
                 items(sortedRooms, key = { it.id }) { room ->
                     val isMember = currentUser != null && room.members.contains(currentUser)
                     val isOwner = currentUser != null && (
@@ -454,85 +484,6 @@ fun ChatRoomListScreen(
     }
 }
 
-@Composable
-private fun RecommendedRoomsSection(
-    rooms: List<Room>,
-    source: String,
-    onJoinClicked: (Room) -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Recommended for you",
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = when (source) {
-                    "GRAPH_SAGE_LOCAL" -> "GraphSAGE"
-                    "LIGHT_GCN_LOCAL" -> "LightGCN"
-                    "CONTENT_BASED" -> "Content-based"
-                    else -> ""
-                },
-                fontSize = 11.sp,
-                color = Color.Gray
-            )
-        }
-
-        rooms.forEach { room ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = room.name,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        if (room.description.isNotEmpty()) {
-                            Text(
-                                text = room.description,
-                                fontSize = 12.sp,
-                                color = Color.Gray,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                        }
-                        Text(
-                            text = "${room.members.size} ${if (room.members.size == 1) "member" else "members"}",
-                            fontSize = 11.sp,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-                    }
-                    OutlinedButton(onClick = { onJoinClicked(room) }) {
-                        Text("Join")
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun SegmentedButtons(current: RoomTab, onChange: (RoomTab) -> Unit) {
@@ -573,7 +524,8 @@ private fun PublicRoomFilterButtons(
         listOf(
             PublicRoomFilter.ALL to "All",
             PublicRoomFilter.ACADEMIC to "Academic",
-            PublicRoomFilter.STUDENT to "Student-made"
+            PublicRoomFilter.STUDENT to "Student-made",
+            PublicRoomFilter.RECOMMENDED to "Recommended"
         ).forEach { (value, label) ->
             val selected = current == value
             Text(

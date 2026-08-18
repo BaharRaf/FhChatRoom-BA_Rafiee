@@ -33,10 +33,13 @@ class GraphSAGETrainConfig:
     hidden_dim: int = 32
     embedding_dim: int = 16
     num_layers: int = 2
-    learning_rate: float = 0.05
-    # Validated training length (recsys.run_epoch_selection): quality is flat
-    # from 0 to ~50 epochs; the protocol fixes 20 on that plateau.
-    epochs: int = 20
+    # Validation-selected jointly (recsys.run_graphsage_lr_selection). The
+    # earlier defaults (0.05, 20 epochs) came from an epoch sweep that looked
+    # flat from 0 to ~50 epochs; that flatness was an artefact of _backward
+    # omitting the row-normalisation Jacobian. With the gradient corrected the
+    # validation curve is no longer flat, and the joint sweep selects these.
+    learning_rate: float = 0.1
+    epochs: int = 300
     weight_decay: float = 1e-4
     self_loop_weight: float = 0.35
     relation_weights: dict[str, float] = field(
@@ -238,7 +241,22 @@ def _backward(
     weight_decay: float,
 ) -> list[np.ndarray]:
     gradients = [np.zeros_like(weight) for weight in weights]
-    current_grad = grad_output
+
+    # The loss is evaluated on the *row-normalised* embeddings returned by
+    # _forward, so the incoming gradient is dL/d(unit) and has to be pulled
+    # back through the normalisation before the tanh derivative applies.
+    # For u = x/||x||, du/dx = (I - u u^T)/||x||, hence
+    #     dL/dx = (dL/du - (dL/du . u) u) / ||x||.
+    # Omitting this both inflates the gradient and leaves in the radial
+    # component that normalisation discards; following that component grows
+    # the pre-activations without changing the embedding directions, which
+    # saturates tanh and collapses every embedding onto one direction.
+    raw_output = np.tanh(caches[-1]["pre_activation"])
+    output_norms = np.linalg.norm(raw_output, axis=1, keepdims=True)
+    output_norms[output_norms == 0.0] = 1.0
+    unit_output = raw_output / output_norms
+    radial = np.sum(grad_output * unit_output, axis=1, keepdims=True)
+    current_grad = (grad_output - radial * unit_output) / output_norms
 
     for layer_index in reversed(range(len(weights))):
         weight = weights[layer_index]

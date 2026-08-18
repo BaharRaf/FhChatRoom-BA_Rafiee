@@ -131,3 +131,6 @@ docs/ba2/hcw/fonts/
 # Figures duplicated from docs/ba2/figures
 recsys_experiments/figures/
 FhChatRoom.zip
+
+# Raw Firestore exports contain un-pseudonymised e-mails and names
+docs/ba2/system_test/account_driven_*/
