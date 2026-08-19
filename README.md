@@ -8,17 +8,16 @@ and 2.
 - **BA1** (theory): HIN model of the platform, GraphSAGE vs. LightGCN
   argument for the semester cold-start problem, Privacy-by-Design
   architecture, frozen evaluation protocol.
-- **BA2** (this repository's `recsys/` + `docs/ba2/`): full implementation
-  and empirical validation.
+- **BA2** (this repository's `recsys/` + Android integration): full
+  implementation and empirical validation. Thesis documents are kept local.
 
 ## Repository layout
 
 ```
 app/                     Android client (Kotlin, Jetpack Compose, MVVM)
 recsys/                  Offline recommendation pipeline (pure NumPy/SciPy)
-recsys/tests/            67 unit & integration tests (pytest)
+recsys/tests/            74 unit & integration tests (pytest)
 recsys_experiments/      Experiment output: results.json, summary.md, figures/
-docs/ba2/                BA2 thesis (LaTeX), defence slides, study guide
 ```
 
 ## Quick start (experiments)
@@ -38,20 +37,14 @@ python3 -m recsys.run_offline_pipeline --help
 ```
 
 Every run is deterministic (seed 42 by default); `results.json`,
-`summary.md`, and all thesis figures are regenerated in
+`summary.md`, and the experiment figures are regenerated in
 `recsys_experiments/`.
 
-## Thesis build
+## Thesis artefacts
 
-```bash
-python3 docs/ba2/gen_results_macros.py        # inject experiment numbers
-cd docs/ba2
-pdflatex thesis && bibtex thesis && pdflatex thesis && pdflatex thesis
-cd defence && pdflatex presentation && pdflatex presentation
-```
-
-All quantitative claims in the thesis are LaTeX macros generated from
-`results.json` — the text can never drift from the measurements.
+The thesis source, PDFs, defence slides, and study documents are kept local.
+The published repository contains the application and recommender code plus
+the experiment outputs needed to reproduce the reported numbers.
 
 ## Android app
 
@@ -70,7 +63,7 @@ inspection in the local payload files
 (`graphsage_firestore_payloads.json`) but are deliberately not written to
 the user document, keeping it minimal and matching the Android `User`
 model. `RecommendationViewModel` observes that document and the room list
-screen renders the "Recommended for you" section with one-tap join.
+screen renders the recommended rooms with one-tap join.
 
 ## Firebase security rules
 
@@ -88,12 +81,9 @@ user docs; the recommendation fields are not client-writable; room members
 may react/hide but not edit others' messages; non-owners cannot change room
 visibility; a client cannot mint arbitrary `system`-owned rooms; and chat
 media uploads are type/size guarded. Deploy with
-`firebase deploy --only firestore:rules,storage,database` (or paste via the
-Console) and keep repo and console in sync.
+`firebase deploy --only firestore:rules,storage,database` and keep repo and
+console in sync.
 
-## Key documents
+## Key artefact
 
-- `docs/ba2/thesis.tex` — Bachelor Thesis 2 (≈30 pages)
-- `docs/ba2/defence/presentation.tex` — defence slide deck
-- `docs/ba2/STUDY_GUIDE.md` — concepts, code tour, Q&A for the defence
 - `recsys_experiments/summary.md` — latest experiment summary
