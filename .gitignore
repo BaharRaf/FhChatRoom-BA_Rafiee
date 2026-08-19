@@ -134,3 +134,6 @@ FhChatRoom.zip
 
 # Raw Firestore exports contain un-pseudonymised e-mails and names
 docs/ba2/system_test/account_driven_*/
+
+# Thesis and all BA documentation: kept locally, never published
+docs/
