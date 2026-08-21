@@ -1,4 +1,5 @@
-"""End-to-end BA2 experiment runner implementing the BA1 Chapter 7 protocol.
+"""End-to-end BA2 experiment runner implementing the BA1 Chapter 7 evaluation
+framework as operationalised in BA2 (see the thesis for documented deviations).
 
 Runs, on one synthetic dataset and one shared train/test split:
 
@@ -10,8 +11,9 @@ Runs, on one synthetic dataset and one shared train/test split:
    and the Kruskal-Wallis fairness test across study-path cohorts.
 4. Catalogue coverage and intra-list diversity.
 5. The privacy-utility sweep: GraphSAGE retrained for epsilon in
-   {1, 3, 5, 8, 10} under three DP variants: meta-path-tiered aggregation
-   perturbation, uniform aggregation perturbation, and DP-SGD-style gradient
+   {1, 3, 5, 8, 10} under three DP variants: relation-tiered aggregation
+   perturbation (HeteDP-inspired), uniform aggregation perturbation, and
+   DP-SGD-inspired full-batch gradient
    perturbation (BA1 Section 5.2).
 
 Writes machine-readable results (results.json), publication figures (PNG and
@@ -519,7 +521,7 @@ def _make_figures(results: dict, dataset, figures_dir: Path) -> None:
         variant_labels = {
             "tiered": "Aggregation perturbation (tiered)",
             "uniform": "Aggregation perturbation (uniform)",
-            "gradient": "Gradient perturbation (DP-SGD)",
+            "gradient": "Gradient perturbation (nominal $\\varepsilon$)",
         }
         for variant, style, color in [
             ("tiered", "o-", "#4878CF"),
