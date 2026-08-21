@@ -117,20 +117,25 @@ class GradientDPConfig:
 
     Each training step clips every weight-gradient matrix to L2 norm
     ``clip_norm`` (g <- g * min(1, C/||g||_2)) and adds Gaussian noise.
-    Because the *aggregate* (full-batch) gradient is clipped rather than
-    per-example gradients, the worst-case difference between the clipped
-    gradients of two neighbouring datasets is bounded by 2C (both vectors
-    have norm at most C), so the per-step L2 sensitivity is 2 * clip_norm.
-    Releasing T clipped gradients is equivalent to one Gaussian mechanism on
-    the concatenated gradient vector, whose L2 sensitivity is bounded by
-    sqrt(T) * 2C, so the noise scale calibrated for the full training run is
+    The calibration used is
 
-        sigma = sqrt(2 ln(1.25/delta)) * sqrt(T) * 2C / epsilon.
+        sigma = sqrt(2 ln(1.25/delta)) * sqrt(T) * 2C / epsilon,
 
-    This conservative closed-form accounting follows Dwork and Roth (2014,
-    Theorem A.1) applied to the composed release; per-example clipping and a
-    moments-accountant bound (Abadi et al. 2016) would both be tighter and
-    are noted as future work.
+    i.e. a per-step sensitivity of 2C with sqrt(T) scaling over T steps.
+    IMPORTANT: this is a nominal calibration, not a certified DP-SGD
+    guarantee. Each weight-gradient matrix is clipped INDEPENDENTLY to C, so
+    with two matrices the joint per-step L2 change across neighbouring
+    datasets is bounded by 2C*sqrt(2), not the 2C used here. Clipping is also
+    applied to the aggregate rather than per-example gradient, and training
+    consists of repeated adaptive noisy updates, so a standard DP-SGD
+    accountant does not cover this mechanism. The epsilon values are
+    experimental calibration labels; per-example DP-SGD with subsampling and
+    an RDP/moments accountant (Abadi et al. 2016) is future work.
+
+    The original single-matrix 2C calibration is RETAINED here deliberately:
+    it is the mechanism that produced the reported DP sweep, and changing it
+    would make those published numbers irreproducible. The limitation is
+    documented rather than retroactively corrected.
     """
 
     epsilon: float = 5.0
