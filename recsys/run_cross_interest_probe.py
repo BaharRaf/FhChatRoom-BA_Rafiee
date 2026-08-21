@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import argparse
 import statistics
-from copy import deepcopy
+
 
 from recsys.graphsage_prep import GraphSAGEConfig
 from recsys.graphsage_prep import prepare_graphsage_training_data
