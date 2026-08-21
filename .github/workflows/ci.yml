@@ -1,5 +1,5 @@
 # CI for the FhChatRoom BA2 artifact.
-# Guards the thesis's frozen numbers: the recsys test suite (67 tests,
+# Guards the thesis's frozen numbers: the recsys test suite (74 tests,
 # including determinism and privacy-boundary checks) must pass on every push.
 name: CI
 
