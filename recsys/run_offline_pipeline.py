@@ -48,8 +48,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--messages-per-day", type=int, default=30)
     parser.add_argument("--days", type=int, default=14)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--epochs", type=int, default=20)
-    parser.add_argument("--learning-rate", type=float, default=0.05)
+    # Generic overrides only. Left as None so each model falls back to its own
+    # validation-selected default (GraphSAGE 0.1/300, LightGCN 50/100) rather
+    # than to one shared pair, which would leave LightGCN undertrained.
+    parser.add_argument("--epochs", type=int)
+    parser.add_argument("--learning-rate", type=float)
     parser.add_argument("--graphsage-epochs", type=int)
     parser.add_argument("--graphsage-learning-rate", type=float)
     parser.add_argument("--lightgcn-epochs", type=int)
@@ -225,13 +228,25 @@ def _train_graphsage(args: argparse.Namespace, dataset: SyntheticDataset, hin):
         config=GraphSAGETrainConfig(
             hidden_dim=args.hidden_dim,
             embedding_dim=args.embedding_dim,
-            learning_rate=args.graphsage_learning_rate or args.learning_rate,
-            epochs=args.graphsage_epochs or args.epochs,
             seed=args.seed,
+            **_training_overrides(args.graphsage_learning_rate, args.graphsage_epochs,
+                                  args.learning_rate, args.epochs),
         ),
     )
     return prep, result
 
+
+
+def _training_overrides(specific_lr, specific_epochs, generic_lr, generic_epochs) -> dict:
+    """Only pass values the user actually supplied; otherwise keep the config default."""
+    overrides = {}
+    lr = specific_lr if specific_lr is not None else generic_lr
+    epochs = specific_epochs if specific_epochs is not None else generic_epochs
+    if lr is not None:
+        overrides["learning_rate"] = lr
+    if epochs is not None:
+        overrides["epochs"] = epochs
+    return overrides
 
 def _train_lightgcn(args: argparse.Namespace, prep):
     return train_lightgcn_embeddings(
@@ -239,9 +254,9 @@ def _train_lightgcn(args: argparse.Namespace, prep):
         config=LightGCNConfig(
             embedding_dim=args.embedding_dim,
             num_layers=args.lightgcn_layers,
-            learning_rate=args.lightgcn_learning_rate or args.learning_rate,
-            epochs=args.lightgcn_epochs or args.epochs,
             seed=args.seed,
+            **_training_overrides(args.lightgcn_learning_rate, args.lightgcn_epochs,
+                                  args.learning_rate, args.epochs),
         ),
     )
 
@@ -268,9 +283,9 @@ def _evaluation_report(args: argparse.Namespace, artifacts: dict[str, object]) -
         config=GraphSAGETrainConfig(
             hidden_dim=args.hidden_dim,
             embedding_dim=args.embedding_dim,
-            learning_rate=args.graphsage_learning_rate or args.learning_rate,
-            epochs=args.graphsage_epochs or args.epochs,
             seed=args.seed,
+            **_training_overrides(args.graphsage_learning_rate, args.graphsage_epochs,
+                                  args.learning_rate, args.epochs),
         ),
     )
 
