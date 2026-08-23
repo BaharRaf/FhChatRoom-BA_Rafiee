@@ -11,7 +11,7 @@ Runs, on one synthetic dataset and one shared train/test split:
    and the Kruskal-Wallis fairness test across study-path cohorts.
 4. Catalogue coverage and intra-list diversity.
 5. The privacy-utility sweep: GraphSAGE retrained for epsilon in
-   {1, 3, 5, 8, 10} under three DP variants: relation-tiered aggregation
+   {0.25, 0.5, 1, 3, 5, 8, 10} under three DP variants: relation-tiered aggregation
    perturbation (HeteDP-inspired), uniform aggregation perturbation, and
    DP-SGD-inspired full-batch gradient
    perturbation (BA1 Section 5.2).
